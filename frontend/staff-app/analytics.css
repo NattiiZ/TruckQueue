@@ -1,0 +1,46 @@
+/* หน้าวิเคราะห์ (ใช้ร่วมกับ style.css) */
+:root{
+  --st1:#e9a000;   /* รอคิว */
+  --st2:#eb6834;   /* เดินทางเข้าจุดรับสินค้า */
+  --st3:#005bac;   /* โหลดสินค้า */
+  --st4:#1baf7a;   /* รอออก */
+}
+.a-sec{margin-top:14px}
+.a-sec h2{font-size:18px}
+.insights{margin:4px 0 14px;padding-left:20px;display:grid;gap:4px;font-size:15.5px}
+.insights b{color:var(--blue)}
+.empty-state{margin-top:14px;background:var(--surface);border:2px dashed var(--line-strong);border-radius:12px;padding:20px;text-align:center;color:var(--muted)}
+
+/* heatmap วัน × ชั่วโมง */
+.heat-wrap{overflow-x:auto}
+.heat{display:grid;gap:3px;min-width:560px;font-size:12px}
+.heat .h-lab{color:var(--muted);text-align:center;font-family:var(--f-mono)}
+.heat .d-lab{color:var(--muted);font-weight:700;display:flex;align-items:center;padding-right:6px}
+.heat .cell{height:30px;border-radius:5px;display:grid;place-items:center;font-family:var(--f-mono);font-size:11px;font-weight:600;background:var(--bg)}
+.heat .cell.peak{outline:3px solid #ffc20e;outline-offset:-1px}
+.scale{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);margin-top:8px}
+.scale i{display:block;width:140px;height:10px;border-radius:5px;background:linear-gradient(90deg,rgba(0,91,172,.08),rgba(0,91,172,1))}
+
+/* แท่งแนวนอน */
+.hbar{display:grid;grid-template-columns:minmax(90px,180px) minmax(0,1fr) 92px;gap:10px;align-items:center;margin-bottom:9px;font-size:15px}
+.hbar .name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+.hbar .track{height:22px;background:var(--bg);border-radius:6px;overflow:hidden;display:flex}
+.hbar .fill{height:100%;background:var(--blue);border-radius:6px}
+.hbar .val{text-align:right;font-family:var(--f-mono);font-size:14px}
+.hbar .val small{color:var(--muted)}
+
+/* แท่งช่วงเวลาแบบต่อกัน */
+.stack-row{margin-bottom:14px}
+.stack-row .head{display:flex;justify-content:space-between;gap:8px;font-size:15px;margin-bottom:5px}
+.stack-row .head b{font-weight:700}
+.stack-row .head span{color:var(--muted);font-family:var(--f-mono);font-size:14px}
+.stack{display:flex;height:30px;border-radius:7px;overflow:hidden;background:var(--bg);gap:2px}
+.stack .seg{height:100%;display:grid;place-items:center;color:#fff;font-size:12px;font-weight:700;font-family:var(--f-mono);min-width:0;overflow:hidden;white-space:nowrap}
+.seg.s1{background:var(--st1);color:#1a1300} .seg.s2{background:var(--st2)} .seg.s3{background:var(--st3)} .seg.s4{background:var(--st4)}
+.sw.k1{background:var(--st1)} .sw.k2{background:var(--st2)} .sw.k3{background:var(--st3)} .sw.k4{background:var(--st4)}
+.stack-row.total .head b{font-size:16px}
+.stack-row.total .stack{height:38px}
+
+@media (max-width:640px){
+  .hbar{grid-template-columns:90px minmax(0,1fr) 78px;font-size:14px}
+}

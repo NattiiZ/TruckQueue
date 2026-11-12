@@ -1,0 +1,96 @@
+/* ธีมสำหรับใช้กลางแจ้ง โทนน้ำเงินแบบ Haier
+   - ใช้โหมดสว่างอย่างเดียว: กลางแดด จอพื้นเข้มสะท้อนแสงจนอ่านยาก
+   - ตัวอักษรเข้มบนพื้นสว่าง คอนทราสต์สูง (ตัวหนังสือหลัก ~15:1, ปุ่มน้ำเงิน ~7:1)
+   - ตัวอักษรและช่องกรอกใหญ่ กดง่ายแม้ใส่ถุงมือ เส้นขอบหนา มองเห็นชัดในแดด
+   - เหลืองใช้เฉพาะตอน "ถึงคิวแล้ว" ให้สะดุดตาที่สุด */
+:root{
+  --bg:#eef3f8;          /* ฟ้าเทาอ่อน ลดแสงจ้าจากพื้นขาวล้วน */
+  --surface:#ffffff;
+  --line:#9fb3c8;        /* เส้นขอบเข้มพอให้เห็นกลางแดด */
+  --line-soft:#d3dfeb;
+  --fg:#0b1f33;          /* น้ำเงินเกือบดำ */
+  --muted:#3d5268;       /* ตัวรองยังเข้มพออ่านกลางแดด */
+  --blue:#005bac;        /* น้ำเงินหลัก */
+  --blue-dark:#00427e;
+  --blue-ink:#ffffff;
+  --blue-soft:#e3eef9;
+  --alert:#ffc20e; --alert-ink:#1a1300;
+  --ok:#11683b; --ok-bg:#dcf1e4;
+  --err:#b3261e; --err-bg:#fde7e4;
+  --f-body:'IBM Plex Sans Thai',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:18px;line-height:1.5;
+  padding-bottom:env(safe-area-inset-bottom,0px);-webkit-text-size-adjust:100%}
+button,input,select{font:inherit}
+:focus-visible{outline:3px solid var(--alert);outline-offset:2px}
+[hidden]{display:none!important}
+
+/* หัว: แถบน้ำเงินทึบ ตัวขาว */
+.top{background:var(--blue);color:var(--blue-ink);padding-top:env(safe-area-inset-top,0px)}
+.top-in,.wrap{max-width:480px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.top-in{padding-block:14px}
+.brand{display:flex;align-items:center;gap:12px}
+.mark{width:40px;height:40px;border-radius:10px;background:#ffffff;color:var(--blue);display:grid;place-items:center;font-weight:700;font-size:15px}
+.brand b{display:block;font-size:21px;line-height:1.2}
+.brand small{color:#d6e6f6;font-size:14px}
+.wrap{padding-block:16px 32px}
+
+.card{background:var(--surface);border:2px solid var(--line-soft);border-radius:16px;padding:20px}
+h1{font-size:24px;margin:0;line-height:1.3}
+.lead{color:var(--muted);margin:4px 0 18px;font-size:16px}
+
+.field{display:grid;gap:6px;margin-bottom:16px;min-width:0}
+.field label{font-weight:700;font-size:17px}
+.field label em{font-style:normal;font-weight:500;font-size:14px;color:var(--muted)}
+.plates{text-align:center;font-weight:700;font-size:20px}
+/* หน้ายืนยันข้อมูล */
+.summary{display:grid;grid-template-columns:auto 1fr;gap:0;margin:0 0 14px;border:2px solid var(--line-soft);border-radius:12px;overflow:hidden}
+.summary dt,.summary dd{margin:0;padding:11px 14px;border-bottom:1px solid var(--line-soft)}
+.summary dt{color:var(--muted);font-size:15px;font-weight:600;background:var(--bg)}
+.summary dd{font-size:19px;font-weight:700;word-break:break-word}
+.summary dt:last-of-type,.summary dd:last-of-type{border-bottom:0}
+.review-actions{display:grid;gap:10px}
+.box.exited{background:var(--surface);border-color:var(--line-soft);color:var(--fg)}
+.field input,.field select{width:100%;min-height:56px;padding:12px 14px;border:2px solid var(--line);border-radius:12px;
+  background:var(--surface);color:var(--fg);font-size:20px;font-weight:500}
+.field input::placeholder{color:#7a8ea3;font-weight:400}
+.field input:focus,.field select:focus{border-color:var(--blue);outline:none;box-shadow:0 0 0 3px var(--blue-soft)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:360px){.two{grid-template-columns:1fr;gap:0}}
+.err{color:var(--err);font-size:17px;font-weight:600;min-height:1.4em;margin-bottom:8px}
+
+.btn{border:2px solid var(--line);background:var(--surface);color:var(--fg);min-height:52px;padding:12px 16px;border-radius:12px;font-weight:700;font-size:17px;cursor:pointer}
+.btn.primary{background:var(--blue);border-color:var(--blue);color:var(--blue-ink);font-size:21px;min-height:62px}
+.btn.primary:active{background:var(--blue-dark)}
+.btn.primary:disabled{opacity:.65;cursor:wait}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--muted);text-decoration:underline;font-weight:600}
+.btn.danger{background:var(--err);border-color:var(--err);color:#fff}
+.full{width:100%}
+
+.banner{background:var(--err-bg);color:var(--err);border:2px solid var(--err);border-radius:12px;padding:10px 12px;margin-bottom:12px;font-size:16px;font-weight:600;text-align:center}
+
+/* บัตรคิว */
+.ticket{text-align:center;display:grid;gap:14px}
+.ticket .label{color:var(--muted);font-size:17px;font-weight:600}
+.ticket .qno{font-family:var(--f-mono);font-size:80px;font-weight:600;line-height:1;color:var(--blue)}
+.ticket .who{font-size:16px;color:var(--muted)}
+.box{border-radius:16px;padding:18px 16px;background:var(--blue-soft);border:2px solid #b9d2ec;display:grid;gap:4px;font-size:18px}
+.box b{display:block;font-size:34px;line-height:1.2}
+.box small{color:var(--muted);font-size:15px}
+.box.called{background:var(--alert);border-color:#d9a200;color:var(--alert-ink);animation:pulse 1.4s ease-in-out infinite}
+.box.called b{font-size:36px}
+.box.called small{color:var(--alert-ink)}
+.box.loading{background:var(--blue);border-color:var(--blue);color:var(--blue-ink)}
+.box.loading small{color:#d6e6f6}
+.box.done{background:var(--ok-bg);border-color:#9fd3b3;color:var(--ok)}
+.box.cancelled{background:var(--err-bg);border-color:#f0a9a1;color:var(--err)}
+@keyframes pulse{50%{transform:scale(1.02)}}
+@media (prefers-reduced-motion:reduce){.box.called{animation:none}}
+.meta{font-size:15px;color:var(--muted)}
+.confirm{display:grid;gap:10px;background:var(--err-bg);border:2px solid #f0a9a1;border-radius:14px;padding:14px;font-weight:600}
+.confirm .row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sound{background:var(--blue-soft);color:var(--blue-dark);border-color:#b9d2ec}

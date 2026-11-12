@@ -1,2 +1,132 @@
-# TruckQueue
-Project for Co-op Internship
+# TruckQ · ระบบจัดคิวรถรับสินค้า
+
+## โครงสร้างโปรเจกต์
+
+```
+TruckQ/
+├── frontend/                     หน้าจอ (HTML/CSS/JS ล้วน ไม่ต้อง build) · เปิดผ่าน backend ที่เดียว
+│   ├── shared/common.js          โค้ดที่ทุกหน้าใช้ร่วมกัน: เรียก API, รูปแบบทะเบียนรถ, แสดงทะเบียน "หัว | หาง"
+│   ├── driver-app/               หน้าคนขับ (/driver): ลงทะเบียน รับคิว ดูสถานะ
+│   │   ├── index.html · style.css
+│   │   └── app.js                เช็กสถานะทุก 5 วินาที, เสียง/สั่นเมื่อถึงคิว
+│   └── staff-app/                หน้าพนักงาน (/staff) · ใช้ได้ทั้งคอมและมือถือ
+│       ├── index.html · style.css
+│       ├── app.js                เรียกคิว + จองคิวที่เคาน์เตอร์ + Dashboard
+│       └── analytics.html/.js/.css   หน้าวิเคราะห์แบบละเอียด (/staff/analytics.html)
+│
+└── backend/                      API (Node.js + Express) ต่อ MariaDB
+    ├── .env                      ค่าเชื่อมต่อฐานข้อมูล (ไม่ขึ้น git)
+    ├── db/
+    │   ├── schema.sql            โครงสร้างฐานข้อมูลล่าสุดทั้งหมด
+    │   ├── seed.sql              ข้อมูลตั้งต้น (จุดรับสินค้า, ตัวอย่างบริษัท/ปลายทาง)
+    │   └── migrations/           ประวัติการแก้โครงสร้าง 001 → 006
+    ├── scripts/
+    │   ├── setup-db.js           ติดตั้งฐานข้อมูลเครื่องใหม่
+    │   ├── run-sql.js            รันไฟล์ SQL (migration ใหม่)
+    │   ├── reset-data.js         ล้างคิว (และคนขับ) เริ่มเลขคิวใหม่ที่ 0001
+    │   └── demo-data.js          ข้อมูลตัวอย่างย้อนหลัง 30 วัน ไว้ดูหน้าวิเคราะห์ (ลบออกได้)
+    └── src/
+        ├── server.js             จุดเริ่มต้น (npm start)
+        ├── app.js                ประกอบ Express: middleware → frontend → API → error
+        ├── config/               env.js (อ่าน .env) · database.js (connection pool, ทรานแซกชัน)
+        ├── middlewares/          requestLogger · errorHandler · requireStaff (ด่าน login พนักงาน)
+        ├── utils/                AppError · helpers (ตัดช่องว่าง, token) · plate (รูปแบบทะเบียนรถ)
+        ├── routes/index.js       รวม API ทั้งหมด ดูไฟล์นี้ไฟล์เดียวรู้ว่ามี API อะไร
+        └── modules/              แยกตามระบบงาน
+            ├── company/          บริษัทขนส่ง
+            ├── destination/      ปลายทาง
+            ├── driver/           คนขับ (เติมข้อมูลจากเบอร์, เปิด/ปิดสิทธิ์)
+            ├── dock/             จุดรับสินค้า (กระดานสถานะ, เรียกคิวถัดไป)
+            ├── report/           สรุปตัวเลข Dashboard วันนี้
+            ├── analytics/        วิเคราะห์ย้อนหลัง: ช่วงเวลาที่รถเยอะ · ส่งไปไหน · เวลาหายไปไหน
+            └── queue/            คิว (งานหลัก)
+                ├── queue.routes.js      เส้นทาง API
+                ├── queue.controller.js  ตรวจข้อมูลที่ส่งมา
+                ├── queue.service.js     ทำงานกับฐานข้อมูล
+                ├── queue.status.js      สถานะคิวและลำดับขั้น
+                └── queue.estimate.js    ประมาณเวลาที่จะถูกเรียก
+```
+
+## กติกาของระบบ
+
+- **จุดรับสินค้า:** รถทุกคันเข้าได้ทุกจุด จุดไหนว่างพนักงานกด "เรียกคิวถัดไป" ระบบจะเรียกคันที่รอนานที่สุดตามลำดับคิวเสมอ
+- **ทะเบียนรถ:** กรอก 2 ช่อง คือ **ทะเบียนหัว** และ **ทะเบียนหาง** รูปแบบป้ายรถบรรทุก `เลขหมวด 2 หลัก-เลขทะเบียน 1–4 หลัก` เช่น `70-1234` (ไม่ต้องใส่จังหวัด) · พิมพ์แค่ตัวเลข ระบบใส่ขีดให้เอง · ทะเบียนผิดรูปแบบรับคิวไม่ได้ · แสดงคู่กันเป็น `70-1234 | 71-5678`
+- กติกาทะเบียนอยู่ 2 ที่ ต้องแก้ให้ตรงกัน: `backend/src/utils/plate.js` (ตรวจจริง) และ `frontend/shared/common.js` (ช่วยกรอก)
+
+**ลำดับการทำงานของ backend:** คำขอเข้ามา → `routes/index.js` → `modules/<ระบบ>/*.routes.js` → controller (ตรวจข้อมูล) → service (ทำงานกับฐานข้อมูล) → ถ้าผิดพลาด service โยน `AppError` แล้ว `errorHandler` แปลงเป็น `{ error }` ส่งกลับ
+
+## วิธีรัน
+
+1. ตั้งค่า MariaDB: คัดลอก `backend/.env.example` เป็น `backend/.env` แล้วแก้ `DB_USER` / `DB_PASSWORD` (ฐานข้อมูลชื่อ `truckcue_db`)
+2. ติดตั้ง
+   ```bash
+   cd backend
+   npm install
+   ```
+   เครื่องใหม่ที่ยังไม่มีฐานข้อมูล: `npm run db:setup` (เครื่องนี้มีแล้ว ไม่ต้องรัน)
+3. เปิด backend
+   ```bash
+   npm start
+   ```
+4. เปิดหน้าเว็บ
+   - หน้าคนขับ: http://localhost:3000/driver/
+   - หน้าพนักงาน: http://localhost:3000/staff/ (จองคิว: `/staff/#book` · Dashboard: `/staff/#dashboard`)
+
+   มือถือใน Wi-Fi เดียวกันใช้ IP ที่ backend พิมพ์ไว้ตอนเริ่มแทน `localhost` เช่น `http://192.168.1.20:3000/staff/`
+
+### ดูหน้าวิเคราะห์ด้วยข้อมูลตัวอย่าง
+```bash
+npm run db:demo
+```
+เพิ่มรถตัวอย่างย้อนหลัง 30 วัน (ไม่ใช่ข้อมูลจริง ไม่กระทบคิววันนี้) แล้วเปิด http://localhost:3000/staff/analytics.html · ดูเสร็จลบด้วย `npm run db:demo -- --remove` (ข้อมูลจริงไม่ถูกลบ)
+
+### ล้างข้อมูล (เริ่มใช้ระบบใหม่ / หลังทดสอบ) · ลบแล้วกู้คืนไม่ได้
+```bash
+npm run db:reset -- --yes
+```
+ลบคิวทั้งหมดและประวัติการกด เลขคิวเริ่มใหม่ที่ 0001 · เพิ่ม `--drivers` ถ้าจะลบรายชื่อคนขับด้วย · ไม่แตะบริษัท ปลายทาง และจุดรับสินค้า
+
+## ฐานข้อมูล (`truckcue_db`)
+
+| ตาราง | เก็บอะไร |
+|---|---|
+| `company` | บริษัทขนส่ง |
+| `destination` | ปลายทาง |
+| `driver` | คนขับ 1 คน 1 แถว · `status` = `active` รับคิวได้ / `inactive` ออกจากงาน-ปิดสิทธิ์ |
+| `dock` | จุดรับสินค้า + เวลามาตรฐาน |
+| `queue` | คิว 1 แถว = รถ 1 คัน 1 รอบ · ทะเบียนหัว/หาง (`plate_no` / `trailer_plate`), ปลายทาง (บังคับทุกช่อง), สถานะ, เวลาทุกขั้น |
+| `queue_event` | ประวัติทุกการกด (ใครทำอะไร ตอนไหน) |
+
+**สถานะคิว:** `waiting` รอคิว → `called` กำลังเรียก → `loading` กำลังเข้าโหลด → `done` โหลดเสร็จ → `exited` ออกแล้ว · `cancelled` ยกเลิก
+เลขคิวรันต่อเนื่อง ไม่เริ่มใหม่ทุกวัน (0001, 0002, ...)
+
+## API
+
+### ฝั่งคนขับ
+| Method | Path | ใช้ทำอะไร |
+|---|---|---|
+| GET | `/api/companies` | รายชื่อบริษัทขนส่ง |
+| GET | `/api/destinations` | รายการปลายทาง |
+| GET | `/api/drivers/lookup?phone=` | เติมชื่อ นามสกุล บริษัทจากเบอร์ (คนขับ inactive ตอบ `inactive: true` ไม่ส่งชื่อ) |
+| POST | `/api/queues` | ลงทะเบียน `{phone, first_name, last_name, company_id, plate_no, trailer_plate, destination_id}` (บังคับทุกช่อง · ทะเบียนรูปแบบ `70-1234` · ปลายทางมีตัวเลือก "ไม่ระบุ") → `{id, token, queue_no}` |
+| GET | `/api/queues/:id?token=` | สถานะคิว จำนวนคันก่อนหน้า เวลาที่คาดว่าจะถูกเรียก |
+| POST | `/api/queues/:id/cancel` | คนขับยกเลิกคิวเอง `{token}` |
+
+### ฝั่งพนักงาน (ยังไม่มี login · ด่านอยู่ที่ `middlewares/requireStaff.js`)
+| Method | Path | ใช้ทำอะไร |
+|---|---|---|
+| GET | `/api/staff/board` | สถานะทุกจุดรับสินค้า, คิวที่รอ (พร้อมเวลาคาดว่าจะเรียก), คิวที่โหลดเสร็จรอออก |
+| GET | `/api/staff/dashboard` | ภาพรวมวันนี้: จำนวนรถแต่ละสถานะ, เวลาเฉลี่ย, แยกจุดรับสินค้า, รายชั่วโมง |
+| GET | `/api/staff/analytics?days=7\|30\|90` | วิเคราะห์ย้อนหลัง: วัน×ชั่วโมงที่รถมาถึง, จำนวนต่อปลายทาง, เวลาเฉลี่ยแต่ละช่วงแยกจุดรับสินค้า |
+| POST | `/api/staff/docks/:id/call-next` | เรียกคิวถัดไป (คันที่รอนานสุด) เข้าจุดรับสินค้านี้ |
+| POST | `/api/staff/queues/:id/start` | กำลังเรียก → กำลังเข้าโหลด |
+| POST | `/api/staff/queues/:id/finish` | กำลังเข้าโหลด → โหลดเสร็จ |
+| POST | `/api/staff/queues/:id/exit` | โหลดเสร็จ → ออกแล้ว |
+| POST | `/api/staff/queues/:id/skip` | กำลังเรียก → รอคิว (ไปต่อท้าย) |
+| POST | `/api/staff/queues/:id/cancel` | รอคิว / กำลังเรียก → ยกเลิก |
+| PATCH | `/api/staff/drivers/:id/status` | `{status: 'active' \| 'inactive'}` เปิด/ปิดสิทธิ์รับคิว |
+
+ทดสอบด้วย PowerShell เช่น
+```powershell
+Invoke-RestMethod -Method Post http://localhost:3000/api/staff/docks/1/call-next
+```

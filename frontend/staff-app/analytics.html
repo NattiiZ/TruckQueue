@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#005bac">
+  <meta name="color-scheme" content="light">
+  <title>วิเคราะห์ข้อมูล · TruckQ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="analytics.css">
+</head>
+<body>
+  <header class="top">
+    <div class="top-in">
+      <div class="brand"><span class="mark" aria-hidden="true">TQ</span><div><b>TruckQ</b><small>พนักงาน · FG Warehouse</small></div></div>
+      <nav class="tabs" aria-label="เมนู">
+        <a href="./#queue">เรียกคิว</a>
+        <a href="./#book">จองคิว</a>
+        <a href="./#dashboard">Dashboard</a>
+        <a href="analytics.html" aria-current="page">วิเคราะห์</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="banner" id="netBanner" hidden></div>
+
+    <div class="bar">
+      <div><h1>วิเคราะห์ข้อมูล</h1><span class="muted" id="rangeTxt"></span></div>
+      <div class="chips" id="period" role="group" aria-label="ช่วงเวลา">
+        <button data-days="7">7 วัน</button><button data-days="30">30 วัน</button><button data-days="90">90 วัน</button>
+      </div>
+    </div>
+
+    <div class="nums" id="summary"></div>
+    <div class="empty-state" id="emptyState" hidden>ยังไม่มีข้อมูลในช่วงนี้ · เมื่อมีรถเข้า-ออกครบรอบ กราฟจะขึ้นเอง</div>
+
+    <!-- 1) ช่วงเวลาที่รถเยอะ -->
+    <section class="card a-sec">
+      <h2>ช่วงเวลาที่รถเยอะ</h2>
+      <p class="sub">จำนวนรถที่มาถึงเฉลี่ยต่อวัน แยกตามวันและชั่วโมง · สีเข้ม = รถเยอะ</p>
+      <ul class="insights" id="peakInsights"></ul>
+      <div class="heat-wrap"><div class="heat" id="heatmap"></div></div>
+      <div class="scale"><span>น้อย</span><i></i><span>มาก</span></div>
+    </section>
+
+    <!-- 2) ส่งไปไหน -->
+    <section class="card a-sec">
+      <h2>ส่งไปไหน</h2>
+      <p class="sub">จำนวนคันต่อปลายทาง</p>
+      <ul class="insights" id="destInsights"></ul>
+      <div id="destBars"></div>
+    </section>
+
+    <!-- 3) เวลาหายไปไหน -->
+    <section class="card a-sec">
+      <h2>เวลาหายไปไหน</h2>
+      <p class="sub">เวลาเฉลี่ยต่อคันในแต่ละช่วง (นาที) · นับเฉพาะคันที่ออกจากคลังแล้ว</p>
+      <ul class="insights" id="stageInsights"></ul>
+      <div class="legend" id="stageLegend"></div>
+      <div id="stageBars"></div>
+    </section>
+  </main>
+
+  <div id="tip" hidden></div>
+
+  <script src="/shared/common.js"></script>
+  <script src="analytics.js"></script>
+</body>
+</html>

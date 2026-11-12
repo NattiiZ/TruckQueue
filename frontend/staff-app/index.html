@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#005bac">
+  <meta name="color-scheme" content="light">
+  <title>พนักงาน · TruckQ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="top-in">
+      <div class="brand"><span class="mark" aria-hidden="true">TQ</span><div><b>TruckQ</b><small>พนักงาน · FG Warehouse</small></div></div>
+      <nav class="tabs" aria-label="เมนู">
+        <a href="#queue" data-tab="queue">เรียกคิว</a>
+        <a href="#book" data-tab="book">จองคิว</a>
+        <a href="#dashboard" data-tab="dashboard">Dashboard</a>
+        <a href="analytics.html">วิเคราะห์</a>
+      </nav>
+      <span class="clock mono" id="clock"></span>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="banner" id="netBanner" hidden></div>
+
+    <!-- เรียกคิว -->
+    <section id="view-queue" hidden>
+      <div class="bar">
+        <div class="chips" id="dockFilter" role="group" aria-label="เลือกจุดรับสินค้า"></div>
+        <span class="muted" id="today"></span>
+      </div>
+      <div class="docks" id="docks"></div>
+
+      <div class="list" id="doneBox">
+        <h2>โหลดเสร็จ รอบันทึกรถออก <span class="count" id="doneN"></span></h2>
+        <div id="doneList"></div>
+      </div>
+      <div class="list">
+        <h2>รอคิว <span class="count" id="waitN"></span></h2>
+        <div id="waitList"></div>
+      </div>
+    </section>
+
+    <!-- จองคิวให้คนขับที่เดินมาที่เคาน์เตอร์ -->
+    <section id="view-book" hidden>
+      <div class="book">
+        <form class="panel" id="bookForm" novalidate>
+          <h1>จองคิวให้คนขับ</h1>
+          <p class="sub">สำหรับคนขับที่เดินมาที่เคาน์เตอร์ · กรอกเบอร์ก่อน ระบบจะเติมชื่อและบริษัทให้ถ้าเคยมาแล้ว</p>
+          <div class="field"><label for="bPhone">เบอร์โทรศัพท์</label><input id="bPhone" inputmode="tel" autocomplete="off" placeholder="08x-xxx-xxxx" maxlength="12"><div class="hint" id="bHint"></div></div>
+          <div class="two">
+            <div class="field"><label for="bFirst">ชื่อ</label><input id="bFirst" autocomplete="off" maxlength="100"></div>
+            <div class="field"><label for="bLast">นามสกุล</label><input id="bLast" autocomplete="off" maxlength="100"></div>
+          </div>
+          <div class="field"><label for="bCompany">บริษัทขนส่ง</label><select id="bCompany"><option value="">กำลังโหลด…</option></select></div>
+          <div class="two">
+            <div class="field"><label for="bPlate">ทะเบียนหัว</label><input id="bPlate" autocomplete="off"></div>
+            <div class="field"><label for="bTrailer">ทะเบียนหาง</label><input id="bTrailer" autocomplete="off"></div>
+          </div>
+          <div class="field"><label for="bDest">ปลายทาง</label><select id="bDest"><option value="">กำลังโหลด…</option></select></div>
+          <div class="err" id="bErr" role="alert"></div>
+          <button class="btn primary full" type="submit">ถัดไป ทวนข้อมูลกับคนขับ</button>
+        </form>
+
+        <section class="panel" id="bookReview" hidden>
+          <h1>ทวนข้อมูลกับคนขับ</h1>
+          <p class="sub">อ่านให้คนขับฟังว่าถูกต้องไหม ก่อนกดยืนยัน</p>
+          <dl class="summary" id="bSummary"></dl>
+          <div class="err" id="bReviewErr" role="alert"></div>
+          <div class="stack">
+            <button class="btn primary full" type="button" id="bConfirm" disabled>ยืนยันจองคิว</button>
+            <button class="btn full" type="button" id="bEdit">แก้ไขข้อมูล</button>
+          </div>
+        </section>
+
+        <section class="panel result" id="bookResult" hidden aria-live="polite"></section>
+      </div>
+    </section>
+
+    <!-- Dashboard -->
+    <section id="view-dashboard" hidden>
+      <div class="bar">
+        <div><h1>ภาพรวมวันนี้</h1><span class="muted" id="dashDate"></span></div>
+        <a class="btn primary" href="analytics.html">วิเคราะห์แบบละเอียด →</a>
+      </div>
+      <div class="nums" id="nums"></div>
+      <h2 class="sec">แต่ละจุดรับสินค้า</h2>
+      <div class="dcards" id="dashDocks"></div>
+      <div class="charts">
+        <div class="card"><h3>รถที่มาถึงรายชั่วโมง</h3><p class="sub">แยกสีตามจุดรับสินค้าที่โหลด ชี้ที่แท่งเพื่อดูตัวเลข</p><div id="hourChart"></div><div class="legend" id="hourLegend"></div></div>
+        <div class="card"><h3>เวลาโหลดเฉลี่ยเทียบมาตรฐาน</h3><p class="sub">นาทีต่อคัน เฉพาะรถที่โหลดเสร็จวันนี้</p><div id="stdChart"></div><div class="legend"><span>แท่งสี = เฉลี่ยวันนี้</span><span>เส้นประ = มาตรฐานของจุดนั้น</span></div></div>
+      </div>
+    </section>
+  </main>
+
+  <div id="tip" hidden></div>
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <script src="/shared/common.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#005bac">
+  <meta name="color-scheme" content="light">
+  <title>รับคิวรถ · TruckQ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@600&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="top-in">
+      <div class="brand"><span class="mark" aria-hidden="true">TQ</span><div><b>TruckQ</b><small>ลงทะเบียนคิวรถ · FG Warehouse</small></div></div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="banner" id="netBanner" hidden>กำลังเชื่อมต่อระบบใหม่…</div>
+
+    <!-- ฟอร์มลงทะเบียน -->
+    <form class="card" id="regForm" novalidate hidden>
+      <h1>ลงทะเบียนรับคิว</h1>
+      <p class="lead">กรอกข้อมูลให้ครบ และตรวจสอบให้ถูกต้อง</p>
+
+      <div class="field">
+        <label for="phone">เบอร์โทรศัพท์</label>
+        <input id="phone" name="phone" inputmode="tel" autocomplete="tel" placeholder="08x-xxx-xxxx" maxlength="12">
+      </div>
+      <div class="two">
+        <div class="field">
+          <label for="firstName">ชื่อ</label>
+          <input id="firstName" name="first_name" autocomplete="given-name" maxlength="100">
+        </div>
+        <div class="field">
+          <label for="lastName">นามสกุล</label>
+          <input id="lastName" name="last_name" autocomplete="family-name" maxlength="100">
+        </div>
+      </div>
+      <div class="field">
+        <label for="carrier">บริษัทขนส่ง</label>
+        <select id="carrier" name="company_id"><option value="">กำลังโหลด…</option></select>
+      </div>
+      <div class="two">
+        <div class="field">
+          <label for="plate">ทะเบียนหัว</label>
+          <input id="plate" name="plate_no" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="trailer">ทะเบียนหาง</label>
+          <input id="trailer" name="trailer_plate" autocomplete="off">
+        </div>
+      </div>
+      <div class="field">
+        <label for="destination">ปลายทาง</label>
+        <select id="destination" name="destination_id"><option value="">กำลังโหลด…</option></select>
+      </div>
+
+      <div class="err" id="formErr" role="alert"></div>
+      <button class="btn primary full" type="submit" id="submitBtn">รับคิว</button>
+    </form>
+
+    <!-- ยืนยันข้อมูลก่อนรับคิว -->
+    <section class="card review" id="review" hidden aria-labelledby="reviewTitle">
+      <h1 id="reviewTitle">ตรวจสอบข้อมูลก่อนรับคิว</h1>
+      <p class="lead">อ่านให้ครบ ถ้าข้อมูลผิด กด "แก้ไขข้อมูล"</p>
+      <dl class="summary" id="summary"></dl>
+      <div class="err" id="reviewErr" role="alert"></div>
+      <div class="review-actions">
+        <button class="btn primary full" type="button" id="confirmBtn" disabled>ยืนยันรับคิว</button>
+        <button class="btn full" type="button" id="editBtn">แก้ไขข้อมูล</button>
+      </div>
+    </section>
+
+    <!-- บัตรคิว -->
+    <section class="card ticket" id="ticket" hidden aria-live="polite"></section>
+  </main>
+
+  <script src="/shared/common.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

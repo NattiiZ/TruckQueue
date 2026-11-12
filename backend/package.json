@@ -1,0 +1,21 @@
+{
+  "name": "truckq-backend",
+  "version": "0.2.0",
+  "private": true,
+  "description": "TruckQ backend API (Express + MariaDB)",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "db:setup": "node scripts/setup-db.js",
+    "db:run": "node scripts/run-sql.js",
+    "db:reset": "node scripts/reset-data.js",
+    "db:demo": "node scripts/demo-data.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.21.2",
+    "mysql2": "^3.11.5"
+  }
+}

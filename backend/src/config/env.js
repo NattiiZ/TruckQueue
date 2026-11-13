@@ -1,7 +1,8 @@
-// อ่านค่าตั้งค่าจากไฟล์ .env ไว้ที่เดียว ส่วนอื่นของระบบ import จากไฟล์นี้
 import 'dotenv/config';
 
-export const env = {
+
+export const env = 
+{
   port: Number(process.env.PORT || 3000),
   db: {
     host: process.env.DB_HOST || '127.0.0.1',
@@ -9,5 +10,11 @@ export const env = {
     user: process.env.DB_USER || 'root',
     password: process.env.DB_PASSWORD || '',
     database: process.env.DB_NAME || 'truckcue_db',
+  },
+  // Web Push (สร้างด้วย npm run push:keys) · ไม่มีกุญแจ = ปิดการส่งแจ้งเตือนแบบ push ไว้ ระบบอื่นใช้ได้ปกติ
+  vapid: {
+    publicKey: process.env.VAPID_PUBLIC_KEY || '',
+    privateKey: process.env.VAPID_PRIVATE_KEY || '',
+    subject: process.env.VAPID_SUBJECT || 'mailto:admin@truckq.local',
   },
 };

@@ -19,7 +19,7 @@
   async function load() {
     document.querySelectorAll('[data-days]').forEach((b) => b.setAttribute('aria-pressed', Number(b.dataset.days) === days));
     try {
-      const data = await api(`/api/staff/analytics?days=${days}`);
+      const data = await api.getAnalytics(days);
       $('#netBanner').hidden = true;
       render(data);
     } catch (e) {

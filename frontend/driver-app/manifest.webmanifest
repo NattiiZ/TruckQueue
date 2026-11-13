@@ -1,0 +1,14 @@
+{
+  "name": "TruckQ รับคิวรถ",
+  "short_name": "TruckQ",
+  "description": "ลงทะเบียนคิวรถ และรับแจ้งเตือนเมื่อถึงคิว",
+  "start_url": "/driver/",
+  "scope": "/driver/",
+  "display": "standalone",
+  "background_color": "#eef3f8",
+  "theme_color": "#005bac",
+  "lang": "th",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

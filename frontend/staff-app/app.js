@@ -23,10 +23,10 @@
   /* ---------- โหลดข้อมูล ---------- */
   async function load() {
     try {
-      const b = await api('/api/staff/board');
+      const b = await api.getBoard();
       offset = new Date(b.server_time) - Date.now();
       board = b;
-      if (view === 'dashboard') dash = await api('/api/staff/dashboard');
+      if (view === 'dashboard') dash = await api.getDashboard();
       $('#netBanner').hidden = true;
       render();
     } catch (e) {
@@ -59,10 +59,10 @@
     busy = true; b.disabled = true;
     try {
       if (act === 'call') {
-        const r = await api(`/api/staff/docks/${dock}/call-next`, { method: 'POST' });
+        const r = await api.callNext(dock);
         toast(`เรียกคิว ${r.queue_no} แล้ว`);
       } else {
-        await api(`/api/staff/queues/${id}/${act}`, { method: 'POST' });
+        await api.updateQueueStatus(id, act);
         toast({ start: 'บันทึกเวลาเริ่มโหลดแล้ว', finish: 'บันทึกโหลดเสร็จแล้ว · กดเรียกคิวถัดไปเมื่อจุดรับสินค้าพร้อม', exit: 'บันทึกรถออกแล้ว', skip: 'ข้ามคิวแล้ว คิวนี้ไปต่อท้าย', cancel: 'ยกเลิกคิวแล้ว' }[act]);
       }
     } catch (ex) {
@@ -111,6 +111,9 @@
         ${called ? `<div class="phone"><span class="mono">${esc(q.phone)}</span><a class="btn sm" href="tel:${digits(q.phone)}">โทร</a></div>` : ''}
         <div class="info">${called ? 'เรียกมาแล้ว' : `เริ่มโหลด ${hhmm(q.loading_started_at)} · ผ่านไป`}
           <span class="timer" data-since="${since}" data-warn="${(called ? LATE : d.std_minutes) * MIN}"${called ? ' data-late' : ''}>${clock(t - since)}</span></div>
+        ${called ? (q.driver_ack_at
+          ? `<div class="ack-msg yes">✓ คนขับกดรับทราบแล้ว ${hhmm(q.driver_ack_at)} · กำลังมา</div>`
+          : `<div class="ack-msg">คนขับยังไม่กดรับทราบ</div>`) : ''}
         ${called ? `<div class="late-msg">รถยังไม่เข้า เกิน ${LATE} นาทีแล้ว โทรตามหรือข้ามคิว</div>` : ''}
         <div class="actions">${called
           ? `<button class="btn primary" data-act="start" data-id="${q.id}">รถเข้าแล้ว เริ่มโหลด</button>${confirmBtn('skip', q.id, 'ข้ามคิว', 'แตะอีกครั้งเพื่อข้ามคิว')}`
@@ -234,7 +237,7 @@
 
   async function loadBookLists() {
     try {
-      const [companies, dests] = await Promise.all([api('/api/companies'), api('/api/destinations')]);
+      const [companies, dests] = await Promise.all([api.getCompanies(), api.getDestinations()]);
       $('#bCompany').innerHTML = '<option value="">เลือกบริษัทขนส่ง</option>' + companies.map((c) => `<option value="${c.id}">${esc(c.company_name)}</option>`).join('');
       $('#bDest').innerHTML = '<option value="">เลือกปลายทาง</option>' + dests.map((d) => `<option value="${d.id}">${esc(d.destination)}</option>`).join('');
       bookListsLoaded = true;
@@ -248,7 +251,7 @@
     if (phone === bookLookupFor) return;
     bookLookupFor = phone;
     try {
-      const d = await api('/api/drivers/lookup?phone=' + encodeURIComponent(phone));
+      const d = await api.lookupDriver(phone);
       if (phone !== bookLookupFor) return;
       if (d.found && d.inactive) setBookHint(d.message, 'bad');
       else if (d.found) {
@@ -299,8 +302,8 @@
     if (!bookPending) return;
     const btn = $('#bConfirm'); btn.disabled = true; btn.textContent = 'กำลังจองคิว…';
     try {
-      const q = await api('/api/queues', { method: 'POST', body: JSON.stringify(bookPending) });
-      const s = await api(`/api/queues/${q.id}?token=${encodeURIComponent(q.token)}`).catch(() => null);
+      const q = await api.createQueue(bookPending);
+      const s = await api.getQueue(q.id, q.token).catch(() => null);
       const b = bookPending; bookPending = null;
       $('#bookResult').innerHTML = `
         <span class="muted">จองคิวสำเร็จ · เลขคิว</span>

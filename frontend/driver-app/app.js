@@ -1,42 +1,73 @@
 // หน้าคนขับ: ลงทะเบียน → ได้เลขคิว → ระบบเช็กสถานะทุก 5 วินาที → แจ้งเตือนเมื่อถึงคิว
 (() => {
-  const { esc, digits, hhmm, store, api, plate } = window.TQ;
+  const { esc, digits, hhmm, store, api, plate, alarm } = window.TQ;
   const KEY = 'truckq-driver-queue';   // จำคิวของเครื่องนี้ไว้ ปิดหน้าแล้วเปิดใหม่ยังเห็นคิวเดิม
+  const ACK_KEY = 'truckq-driver-ack'; // จำว่ากด "รับทราบ" การเรียกครั้งไหนไปแล้ว (เปิดหน้าใหม่จะได้ไม่ดังซ้ำ)
   const POLL_MS = 5000;
   const $ = (s) => document.querySelector(s);
 
   let current = null;     // { id, token }
-  let lastStatus = null;
-  let pollTimer = null;
+  let lastQueue = null;   // ข้อมูลคิวล่าสุดจาก server
+  let poller = null;
   let confirming = false;
-  let audio = null;
 
   try { current = JSON.parse(store.get(KEY)); } catch (e) { current = null; }
   const remember = (q) => { current = q; store.set(KEY, q ? JSON.stringify(q) : null); };
   plate.bind($('#plate'));
   plate.bind($('#trailer'));
 
-  /* ---------- เสียง + สั่น แจ้งเตือนเมื่อถึงคิว ---------- */
-  function unlockAudio() {
-    try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); audio.resume(); } catch (e) { }
+  /* ---------- เช็กสถานะเป็นระยะ ----------
+     ใช้ตัวจับเวลาใน Web Worker เพราะ setInterval ปกติจะถูกเบราว์เซอร์หน่วงเหลือนาทีละครั้ง
+     เมื่อสลับไปแอปอื่นนานๆ ทำให้รู้ช้าว่าถึงคิว */
+  function startPolling(fn, ms) {
+    try {
+      const src = URL.createObjectURL(new Blob([`setInterval(() => postMessage(0), ${ms})`], { type: 'text/javascript' }));
+      const worker = new Worker(src);
+      worker.onmessage = fn;
+      return { stop: () => worker.terminate() };
+    } catch (e) {
+      const t = setInterval(fn, ms);
+      return { stop: () => clearInterval(t) };
+    }
   }
-  function alertCalled() {
-    try { navigator.vibrate && navigator.vibrate([400, 200, 400, 200, 400]); } catch (e) { }
-    if (!audio) return;
-    [0, 0.4, 0.8].forEach((t) => {
-      const o = audio.createOscillator(), g = audio.createGain();
-      o.frequency.value = 880; o.connect(g); g.connect(audio.destination);
-      g.gain.setValueAtTime(0.25, audio.currentTime + t);
-      g.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + t + 0.3);
-      o.start(audio.currentTime + t); o.stop(audio.currentTime + t + 0.35);
-    });
+
+  /* ---------- เตือนเมื่อถึงคิว: ดังวนซ้ำ + หน้าจอเตือนเต็มจอ จนกว่าจะกด "รับทราบ" ---------- */
+  const callKey = (q) => `${q.id}:${q.called_at}`;   // ถูกข้ามแล้วเรียกใหม่ = นับเป็นการเรียกครั้งใหม่ ต้องดังอีก
+
+  function checkAlarm(q) {
+    // ต้องเตือน = ถูกเรียกอยู่ และยังไม่ได้กดรับทราบ (ทั้งบน server และในเครื่องนี้ เผื่อเน็ตหลุดตอนกด)
+    const needAck = q.status === 'called' && !q.driver_ack_at && store.get(ACK_KEY) !== callKey(q);
+    if (needAck) {
+      alarm.start(q);
+      $('#alarmDock').textContent = q.dock_name || 'จุดรับสินค้า';
+      $('#alarmQno').textContent = q.queue_no;
+      $('#alarm').hidden = false;
+    } else {
+      alarm.stop();
+      $('#alarm').hidden = true;
+    }
   }
+
+  function acknowledge() {
+    if (lastQueue?.status === 'called') store.set(ACK_KEY, callKey(lastQueue));
+    alarm.stop();
+    $('#alarm').hidden = true;
+    // แจ้ง server: หยุดส่งแจ้งเตือนซ้ำ และพนักงานจะเห็นว่าคนขับรับทราบแล้ว
+    if (current) api.ackQueue(current.id, current.token).catch(() => { });
+  }
+  $('#alarmAck').addEventListener('click', acknowledge);
+  alarm.onAck = acknowledge;                                     // กด "รับทราบ" จากแจ้งเตือนของระบบ
+  alarm.onPush = () => { if (current) refresh(); };              // server ส่งแจ้งเตือนมา → เช็กสถานะทันที
+  alarm.onChange = () => {                                       // เพิ่งเปิดเสียง/อนุญาตแจ้งเตือน
+    if (lastQueue) renderTicket(lastQueue);
+    alarm.enablePush(current);
+  };
 
   /* ---------- ฟอร์ม ---------- */
   async function loadCarriers() {
     const sel = $('#carrier');
     try {
-      const list = await api('/api/companies');
+      const list = await api.getCompanies();
       sel.innerHTML = '<option value="">เลือกบริษัทขนส่ง</option>' + list.map((c) => `<option value="${c.id}">${esc(c.company_name)}</option>`).join('');
     } catch (e) {
       sel.innerHTML = '<option value="">โหลดรายชื่อไม่ได้</option>';
@@ -47,7 +78,7 @@
   async function loadDestinations() {
     const sel = $('#destination');
     try {
-      const list = await api('/api/destinations');
+      const list = await api.getDestinations();
       sel.innerHTML = '<option value="">เลือกปลายทาง</option>' + list.map((d) => `<option value="${d.id}">${esc(d.destination)}</option>`).join('');
     } catch (e) {
       sel.innerHTML = '<option value="">โหลดรายการปลายทางไม่ได้</option>';
@@ -62,7 +93,7 @@
     if (phone === lookupFor) return;
     lookupFor = phone;
     try {
-      const d = await api('/api/drivers/lookup?phone=' + encodeURIComponent(phone));
+      const d = await api.lookupDriver(phone);
       if (phone !== lookupFor) return;
       err.textContent = d.found && d.inactive ? d.message : '';   // ปิดสิทธิ์แล้ว: ไม่เติมข้อมูล และเซิร์ฟเวอร์จะไม่รับคิว
       if (d.found && !d.inactive) {
@@ -80,7 +111,7 @@
 
   $('#regForm').addEventListener('submit', (e) => {
     e.preventDefault();
-    unlockAudio();
+    alarm.unlock();
     const body = {
       phone: $('#phone').value.trim(), first_name: $('#firstName').value.trim(), last_name: $('#lastName').value.trim(),
       company_id: $('#carrier').value, plate_no: $('#plate').value.trim(),
@@ -133,9 +164,10 @@
   });
   $('#confirmBtn').addEventListener('click', async () => {
     if (!pending) return;
+    alarm.unlock();   // ขออนุญาตเปิดเสียง/แจ้งเตือนตอนกดยืนยัน
     const btn = $('#confirmBtn'); btn.disabled = true; btn.textContent = 'กำลังรับคิว…';
     try {
-      const q = await api('/api/queues', { method: 'POST', body: JSON.stringify(pending) });
+      const q = await api.createQueue(pending);
       remember({ id: q.id, token: q.token });
       pending = null; $('#regForm').reset(); lookupFor = '';
       showTicket();
@@ -147,25 +179,28 @@
 
   /* ---------- บัตรคิว ---------- */
   function showForm() {
-    stopPolling(); lastStatus = null; confirming = false;
+    stopPolling(); lastQueue = null; confirming = false;
+    alarm.stop(); alarm.keepScreenOn(false); $('#alarm').hidden = true;
     $('#ticket').hidden = true; $('#review').hidden = true; $('#regForm').hidden = false;
   }
   function showTicket() {
     clearInterval(countdown);
     $('#regForm').hidden = true; $('#review').hidden = true; $('#ticket').hidden = false;
-    refresh(); stopPolling(); pollTimer = setInterval(refresh, POLL_MS);
+    alarm.keepScreenOn(true);   // กันจอดับระหว่างรอคิว
+    alarm.enablePush(current);  // สมัครรับแจ้งเตือนถึงมือถือ (ถ้าอนุญาตแจ้งเตือนไว้แล้ว)
+    refresh(); stopPolling(); poller = startPolling(refresh, POLL_MS);
   }
-  function stopPolling() { clearInterval(pollTimer); pollTimer = null; }
+  function stopPolling() { poller?.stop(); poller = null; }
 
   async function refresh() {
     if (!current) return showForm();
     try {
-      const q = await api(`/api/queues/${current.id}?token=${encodeURIComponent(current.token)}`);
+      const q = await api.getQueue(current.id, current.token);
       $('#netBanner').hidden = true;
-      if (lastStatus === 'waiting' && q.status === 'called') alertCalled();
-      lastStatus = q.status;
+      lastQueue = q;
+      checkAlarm(q);
       renderTicket(q);
-      if (q.status === 'exited' || q.status === 'cancelled') stopPolling();
+      if (q.status === 'exited' || q.status === 'cancelled') { stopPolling(); alarm.keepScreenOn(false); }
     } catch (e) {
       if (e.status === 404) { remember(null); return showForm(); }
       $('#netBanner').hidden = false;
@@ -201,26 +236,29 @@
       box = `<div class="box cancelled">ยกเลิกคิวแล้ว<b>ไม่ต้องรอเรียก</b></div>`;
       actions = `<button class="btn primary full" data-act="new">ลงทะเบียนคิวใหม่</button>`;
     }
-    const sound = (q.status === 'waiting' && (!audio || audio.state !== 'running'))
-      ? `<button class="btn sound full" data-act="sound">แตะเพื่อเปิดเสียงแจ้งเตือนเมื่อถึงคิว</button>` : '';
+    const needNoti = 'Notification' in window && Notification.permission === 'default';
+    const sound = (q.status === 'waiting' && (!alarm.isUnlocked() || needNoti))
+      ? `<button class="btn sound full" data-act="sound">แตะเพื่อเปิดเสียงและแจ้งเตือนเมื่อถึงคิว</button>` : '';
+    const tip = q.status === 'waiting'
+      ? `<div class="tip">เปิดเสียงโทรศัพท์ให้ดังสุด · เปิดหน้านี้ค้างไว้ ถึงคิวแล้วจะมีเสียงดังจนกว่าจะกด "รับทราบ"</div>` : '';
     $('#ticket').innerHTML = `
       <span class="label">เลขคิวของคุณ</span>
       <div class="qno">${esc(q.queue_no)}</div>
       <div class="plates">${esc(plate.pair(q))}</div>
       <div class="who">${esc(q.first_name)} ${esc(q.last_name)} · ${esc(q.company_name)}${q.destination ? `<br>ปลายทาง ${esc(q.destination)}` : ''}</div>
-      ${box}${sound}${actions}
+      ${box}${sound}${tip}${actions}
       <div class="meta">ลงทะเบียนเวลา ${hhmm(q.registered_at)} · เปิดหน้านี้ค้างไว้ได้ สถานะจะอัปเดตเอง</div>`;
   }
 
   $('#ticket').addEventListener('click', async (e) => {
     const b = e.target.closest('[data-act]'); if (!b) return;
     const a = b.dataset.act;
-    if (a === 'sound') { unlockAudio(); refresh(); }
+    if (a === 'sound') { alarm.unlock(); refresh(); }
     else if (a === 'cancel') { confirming = true; refresh(); }
     else if (a === 'keep') { confirming = false; refresh(); }
     else if (a === 'cancel-yes') {
       b.disabled = true;
-      try { await api(`/api/queues/${current.id}/cancel`, { method: 'POST', body: JSON.stringify({ token: current.token }) }); }
+      try { await api.cancelQueue(current.id, current.token); }
       catch (ex) { alertBanner(ex.message); }
       confirming = false; refresh();
     } else if (a === 'new') { remember(null); showForm(); }
@@ -228,7 +266,7 @@
   function alertBanner(msg) { const n = $('#netBanner'); n.textContent = msg; n.hidden = false; setTimeout(() => { n.hidden = true; n.textContent = 'กำลังเชื่อมต่อระบบใหม่…'; }, 4000); }
 
   // กลับมาที่หน้านี้ (สลับแอป/เปิดจอ) ให้เช็กสถานะทันที
-  document.addEventListener('visibilitychange', () => { if (!document.hidden && current && pollTimer) refresh(); });
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && current && poller) refresh(); });
 
   loadCarriers();
   loadDestinations();

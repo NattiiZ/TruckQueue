@@ -11,11 +11,14 @@
     "db:setup": "node scripts/setup-db.js",
     "db:run": "node scripts/run-sql.js",
     "db:reset": "node scripts/reset-data.js",
-    "db:demo": "node scripts/demo-data.js"
+    "db:demo": "node scripts/demo-data.js",
+    "push:keys": "node scripts/push-keys.js"
   },
   "dependencies": {
+    "axios": "^1.21.1",
     "dotenv": "^16.4.5",
     "express": "^4.21.2",
-    "mysql2": "^3.11.5"
+    "mysql2": "^3.11.5",
+    "web-push": "^4.0.0"
   }
 }

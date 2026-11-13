@@ -1,4 +1,5 @@
 // โค้ดที่ทุกหน้าใช้ร่วมกัน (หน้าคนขับ หน้าพนักงาน หน้าวิเคราะห์) · เรียกใช้ผ่าน window.TQ
+// ลำดับโหลดในหน้า HTML: axios → common.js → api.js → โค้ดของหน้านั้น
 (() => {
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const digits = (s) => String(s ?? '').replace(/\D/g, '');
@@ -9,16 +10,6 @@
     get: (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } },
     set: (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) { } },
   };
-
-  /** เรียก API (หน้าเว็บกับ API อยู่เซิร์ฟเวอร์เดียวกัน) · error มี .status หรือ .network */
-  async function api(path, options = {}) {
-    let res;
-    try { res = await fetch(path, { headers: { 'Content-Type': 'application/json' }, ...options }); }
-    catch (e) { throw Object.assign(new Error('เชื่อมต่อระบบไม่ได้ ตรวจสอบอินเทอร์เน็ตแล้วลองใหม่'), { network: true }); }
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw Object.assign(new Error(data.error || 'ระบบขัดข้อง ลองใหม่อีกครั้ง'), { status: res.status });
-    return data;
-  }
 
   /* ---------- ทะเบียนรถ: เลขหมวด 2 หลัก - เลขทะเบียน 1–4 หลัก เช่น 70-1234 ----------
      กติกาเดียวกับ backend/src/utils/plate.js ถ้าแก้ที่นี่ต้องแก้ที่นั่นด้วย */
@@ -39,5 +30,6 @@
     },
   };
 
-  window.TQ = { esc, digits, hhmm, store, api, plate };
+  // การเรียก API อยู่ที่ shared/api.js (เพิ่ม window.TQ.api ให้)
+  window.TQ = { esc, digits, hhmm, store, plate };
 })();

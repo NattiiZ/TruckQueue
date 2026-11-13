@@ -47,7 +47,7 @@ export async function getForDriver(id, token) {
   const [[q]] = await pool.query(
     `SELECT q.id, q.queue_no, q.access_token, q.first_name, q.last_name,
             q.plate_no, q.trailer_plate, ds.destination, q.status,
-            q.registered_at, q.called_at, q.loading_started_at, q.loading_finished_at, q.exited_at,
+            q.registered_at, q.called_at, q.driver_ack_at, q.loading_started_at, q.loading_finished_at, q.exited_at,
             c.company_name, d.dock_name
        FROM queue q
        JOIN company c ON c.id = q.company_id
@@ -65,6 +65,18 @@ export async function getForDriver(id, token) {
   return out;
 }
 
+/** ตรวจว่า token ตรงกับคิว (ใช้กับ API ฝั่งคนขับ) */
+export async function assertDriverToken(id, token) {
+  const [[q]] = await pool.query('SELECT access_token FROM queue WHERE id = ?', [id]);
+  if (!q || !sameToken(q.access_token, token)) throw new AppError('ไม่พบคิวนี้', 404);
+}
+
+/** คนขับกด "รับทราบ" ว่าถึงคิวแล้ว → หยุดส่งแจ้งเตือนซ้ำ และพนักงานเห็นว่าคนขับกำลังมา */
+export async function acknowledgeCall(id, token) {
+  await assertDriverToken(id, token);
+  await pool.query("UPDATE queue SET driver_ack_at = NOW(3) WHERE id = ? AND status = 'called' AND driver_ack_at IS NULL", [id]);
+}
+
 /** คนขับยกเลิกคิวเอง (ได้เฉพาะตอนยังรอคิว) */
 export async function cancelByDriver(id, token) {
   await tx(async (c) => {
@@ -80,7 +92,7 @@ export async function cancelByDriver(id, token) {
 
 const BOARD_COLS = `q.id, q.queue_no, q.first_name, q.last_name, q.phone, c.company_name,
                     q.plate_no, q.trailer_plate, ds.destination, q.dock_id, q.status,
-                    q.registered_at, q.called_at, q.loading_started_at, q.loading_finished_at`;
+                    q.registered_at, q.called_at, q.driver_ack_at, q.loading_started_at, q.loading_finished_at`;
 const BOARD_FROM = `FROM queue q JOIN company c ON c.id = q.company_id LEFT JOIN destination ds ON ds.id = q.destination_id`;
 
 /** สถานะทุกจุดรับสินค้า + คิวที่รอ (พร้อมเวลาที่คาดว่าจะเรียก) + คิวที่โหลดเสร็จรอบันทึกออก */
@@ -111,7 +123,7 @@ export async function callNext(dockId) {
     if (busy) throw new AppError(`จุดรับสินค้านี้ยังมีคิว ${busy.queue_no} อยู่`, 409);
     const [[next]] = await c.query("SELECT id, queue_no FROM queue WHERE status = 'waiting' ORDER BY sort_order LIMIT 1 FOR UPDATE");
     if (!next) throw new AppError('ไม่มีรถรอคิว', 409);
-    await c.query("UPDATE queue SET status = 'called', dock_id = ?, called_at = NOW(3) WHERE id = ?", [dockId, next.id]);
+    await c.query("UPDATE queue SET status = 'called', dock_id = ?, called_at = NOW(3), driver_ack_at = NULL WHERE id = ?", [dockId, next.id]);
     await logEvent(c, next.id, 'call', dockId);
     return { ok: true, queue_id: next.id, queue_no: next.queue_no };
   });

@@ -94,3 +94,18 @@ h1{font-size:24px;margin:0;line-height:1.3}
 .confirm{display:grid;gap:10px;background:var(--err-bg);border:2px solid #f0a9a1;border-radius:14px;padding:14px;font-weight:600}
 .confirm .row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .sound{background:var(--blue-soft);color:var(--blue-dark);border-color:#b9d2ec}
+.tip{font-size:15px;color:var(--muted);background:var(--bg);border-radius:12px;padding:10px 12px}
+
+/* หน้าจอเตือนเต็มจอเมื่อถึงคิว: เหลือง-แดงกระพริบ ให้เห็นได้จากระยะไกล */
+.alarm{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:24px;
+  background:var(--alert);color:var(--alert-ink);animation:alarmFlash 1s steps(1) infinite}
+.alarm-in{max-width:440px;width:100%;text-align:center;display:grid;gap:12px}
+.alarm-bell{font-size:72px;line-height:1;animation:ring .5s ease-in-out infinite alternate}
+.alarm h2{margin:0;font-size:36px;line-height:1.2}
+.alarm-qno{font-family:var(--f-mono);font-size:88px;font-weight:600;line-height:1}
+.alarm p{margin:0;font-size:22px}
+.alarm p b{display:block;font-size:40px;line-height:1.2}
+.alarm-ack{background:#0b1f33;border-color:#0b1f33;color:#fff;font-size:26px;min-height:84px;border-radius:16px;margin-top:12px}
+@keyframes alarmFlash{50%{background:#e5322b;color:#fff}}
+@keyframes ring{from{transform:rotate(-15deg)}to{transform:rotate(15deg)}}
+@media (prefers-reduced-motion:reduce){.alarm,.alarm-bell{animation:none}}

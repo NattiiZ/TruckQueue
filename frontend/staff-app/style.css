@@ -77,6 +77,8 @@ h2,h3{margin:0;font-weight:700}
 .timer.warn{color:var(--late)}
 .late-msg{display:none;color:var(--late);font-weight:700;font-size:14.5px}
 .dock.late .late-msg{display:block}
+.ack-msg{font-size:14.5px;font-weight:600;color:var(--muted)}
+.ack-msg.yes{color:var(--ok)}
 .actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:auto}
 .actions .btn.primary{flex:1 1 auto}
 .idle{margin-top:auto;display:grid;gap:10px}

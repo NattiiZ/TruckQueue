@@ -3,6 +3,7 @@ import { AppError } from '../../utils/AppError.js';
 import { clean, digits } from '../../utils/helpers.js';
 import { normalizePlate, isValidPlate, PLATE_EXAMPLE } from '../../utils/plate.js';
 import * as queueService from './queue.service.js';
+import * as pushService from '../push/push.service.js';
 
 /** POST /api/queues  { phone, first_name, last_name, company_id, plate_no, trailer_plate, destination_id } — บังคับทุกช่อง */
 export async function register(req, res) {
@@ -37,6 +38,20 @@ export async function getForDriver(req, res) {
 /** POST /api/queues/:id/cancel  { token } */
 export async function cancelByDriver(req, res) {
   await queueService.cancelByDriver(Number(req.params.id) || 0, String(req.body.token || ''));
+  res.json({ ok: true });
+}
+
+/** POST /api/queues/:id/push  { token, subscription } — สมัครรับแจ้งเตือน "ถึงคิวแล้ว" */
+export async function subscribePush(req, res) {
+  const id = Number(req.params.id) || 0;
+  await queueService.assertDriverToken(id, String(req.body.token || ''));
+  await pushService.save(id, req.body.subscription);
+  res.json({ ok: true });
+}
+
+/** POST /api/queues/:id/ack  { token } — คนขับกด "รับทราบ" */
+export async function acknowledge(req, res) {
+  await queueService.acknowledgeCall(Number(req.params.id) || 0, String(req.body.token || ''));
   res.json({ ok: true });
 }
 

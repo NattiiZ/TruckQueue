@@ -6,6 +6,11 @@
   <meta name="theme-color" content="#005bac">
   <meta name="color-scheme" content="light">
   <title>รับคิวรถ · TruckQ</title>
+  <!-- ติดตั้งเป็นแอปบนหน้าจอโฮมได้ (iPhone ต้องติดตั้งก่อน จึงจะรับแจ้งเตือนถึงคิวได้) -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="TruckQ">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@600&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap">
@@ -79,7 +84,21 @@
     <section class="card ticket" id="ticket" hidden aria-live="polite"></section>
   </main>
 
+  <!-- หน้าจอเตือนเต็มจอเมื่อถึงคิว: ปิดได้ทางเดียวคือกด "รับทราบ" -->
+  <div class="alarm" id="alarm" role="alertdialog" aria-modal="true" aria-labelledby="alarmTitle" hidden>
+    <div class="alarm-in">
+      <div class="alarm-bell" aria-hidden="true">🔔</div>
+      <h2 id="alarmTitle">ถึงคิวของคุณแล้ว!</h2>
+      <div class="alarm-qno" id="alarmQno"></div>
+      <p>กรุณานำรถเข้า<b id="alarmDock"></b></p>
+      <button class="btn alarm-ack" type="button" id="alarmAck">รับทราบ · กำลังไป</button>
+    </div>
+  </div>
+
+  <script src="/vendor/axios/axios.min.js"></script>
   <script src="/shared/common.js"></script>
+  <script src="/shared/api.js"></script>
+  <script src="alarm.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

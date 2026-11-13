@@ -64,6 +64,7 @@ CREATE TABLE IF NOT EXISTS queue (
   skip_count           SMALLINT     NOT NULL DEFAULT 0,
   registered_at        DATETIME(3)  NOT NULL,
   called_at            DATETIME(3)  NULL,
+  driver_ack_at        DATETIME(3)  NULL,         -- คนขับกด "รับทราบ" การเรียกครั้งล่าสุด (เรียกใหม่ = NULL)
   loading_started_at   DATETIME(3)  NULL,
   loading_finished_at  DATETIME(3)  NULL,
   exited_at            DATETIME(3)  NULL,
@@ -91,4 +92,14 @@ CREATE TABLE IF NOT EXISTS queue_event (
   created_at  DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   KEY idx_event_queue (queue_id),
   CONSTRAINT fk_event_queue FOREIGN KEY (queue_id) REFERENCES queue(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Web Push: ที่อยู่ส่งแจ้งเตือน "ถึงคิวแล้ว" ไปยังมือถือที่ถือคิวนั้น (1 คิว : 1 เครื่อง)
+CREATE TABLE IF NOT EXISTS push_subscription (
+  queue_id    BIGINT UNSIGNED NOT NULL PRIMARY KEY,
+  endpoint    VARCHAR(1000)   NOT NULL,
+  p256dh      VARCHAR(200)    NOT NULL,
+  auth        VARCHAR(100)    NOT NULL,
+  created_at  DATETIME(3)     NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  CONSTRAINT fk_push_queue FOREIGN KEY (queue_id) REFERENCES queue(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -1,4 +1,4 @@
-import "dotenv/config"; // สำรอง: อ่าน .env (ค่าจาก --env-file ใน npm scripts มาก่อนเสมอ)
+import 'dotenv/config';
 
 
 export const env = 

@@ -6,16 +6,8 @@
   "type": "module",
   "main": "src/server.js",
   "scripts": {
-    "start": "node --env-file=.env.production src/server.js",
-    "dev": "node --env-file=.env.development --watch src/server.js",
-    "db:setup": "node --env-file=.env.production scripts/setup-db.js",
-    "db:run": "node --env-file=.env.production scripts/run-sql.js",
-    "db:reset": "node --env-file=.env.production scripts/reset-data.js",
-    "db:demo": "node --env-file=.env.production scripts/demo-data.js",
-    "db:setup:dev": "node --env-file=.env.development scripts/setup-db.js",
-    "db:run:dev": "node --env-file=.env.development scripts/run-sql.js",
-    "db:reset:dev": "node --env-file=.env.development scripts/reset-data.js",
-    "db:demo:dev": "node --env-file=.env.development scripts/demo-data.js",
+    "start": "node --watch src/server.js",
+    "db:reset": "node scripts/reset-data.js",
     "push:keys": "node scripts/push-keys.js"
   },
   "dependencies": {

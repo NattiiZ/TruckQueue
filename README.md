@@ -16,15 +16,8 @@ TruckQ/
 │
 └── backend/                      API (Node.js + Express) ต่อ MariaDB
     ├── .env                      ค่าเชื่อมต่อฐานข้อมูล (ไม่ขึ้น git)
-    ├── db/
-    │   ├── schema.sql            โครงสร้างฐานข้อมูลล่าสุดทั้งหมด
-    │   ├── seed.sql              ข้อมูลตั้งต้น (จุดรับสินค้า, ตัวอย่างบริษัท/ปลายทาง)
-    │   └── migrations/           ประวัติการแก้โครงสร้าง 001 → 006
     ├── scripts/
-    │   ├── setup-db.js           ติดตั้งฐานข้อมูลเครื่องใหม่
-    │   ├── run-sql.js            รันไฟล์ SQL (migration ใหม่)
-    │   ├── reset-data.js         ล้างคิว (และคนขับ) เริ่มเลขคิวใหม่ที่ 0001
-    │   └── demo-data.js          ข้อมูลตัวอย่างย้อนหลัง 30 วัน ไว้ดูหน้าวิเคราะห์ (ลบออกได้)
+    │   └── reset-data.js         ล้างคิว (และคนขับ) เริ่มเลขคิวใหม่ที่ 0001
     └── src/
         ├── server.js             จุดเริ่มต้น (npm start)
         ├── app.js                ประกอบ Express: middleware → frontend → API → error
@@ -57,16 +50,12 @@ TruckQ/
 
 ## วิธีรัน
 
-1. ตั้งค่าฐานข้อมูล (แยกตามเครื่อง · ไฟล์ `.env*` ไม่ขึ้น git ยกเว้น `.env.example`)
-   - **เครื่อง Server (XAMPP):** `backend/.env.production` → ฐานข้อมูล `truckqueue_db` · ใช้กับ `npm start`, `npm run db:*`
-   - **เครื่อง Dev:** `backend/.env.development` → ฐานข้อมูล `truckqueue_dev` · ใช้กับ `npm run dev`, `npm run db:*:dev`
-   - ค่าที่ใช้ร่วมกัน (เช่น VAPID) ใส่ใน `backend/.env` · เครื่องใหม่ให้คัดลอกจาก `.env.example` แล้วแก้ `DB_USER` / `DB_PASSWORD`
+1. ตั้งค่าฐานข้อมูล: เปิด MySQL ใน XAMPP แล้วแก้ค่าใน `backend/.env` (`DB_USER`, `DB_PASSWORD`, `DB_NAME`) · ไฟล์นี้ไม่ขึ้น git
 2. ติดตั้ง
    ```bash
    cd backend
    npm install
    ```
-   เครื่องใหม่ที่ยังไม่มีฐานข้อมูล: `npm run db:setup` (เครื่องนี้มีแล้ว ไม่ต้องรัน)
 3. เปิด backend
    ```bash
    npm start
@@ -76,12 +65,6 @@ TruckQ/
    - หน้าพนักงาน: http://localhost:3000/staff/ (จองคิว: `/staff/#book` · Dashboard: `/staff/#dashboard`)
 
    มือถือใน Wi-Fi เดียวกันใช้ IP ที่ backend พิมพ์ไว้ตอนเริ่มแทน `localhost` เช่น `http://192.168.1.20:3000/staff/`
-
-### ดูหน้าวิเคราะห์ด้วยข้อมูลตัวอย่าง
-```bash
-npm run db:demo
-```
-เพิ่มรถตัวอย่างย้อนหลัง 30 วัน (ไม่ใช่ข้อมูลจริง ไม่กระทบคิววันนี้) แล้วเปิด http://localhost:3000/staff/analytics.html · ดูเสร็จลบด้วย `npm run db:demo -- --remove` (ข้อมูลจริงไม่ถูกลบ)
 
 ### ล้างข้อมูล (เริ่มใช้ระบบใหม่ / หลังทดสอบ) · ลบแล้วกู้คืนไม่ได้
 ```bash

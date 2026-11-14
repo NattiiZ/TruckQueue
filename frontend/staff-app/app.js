@@ -97,7 +97,7 @@
           <div class="idle">
             <div class="info">${next ? `คิวถัดไป <b class="mono">${esc(next.queue_no)}</b> · ${esc(plate.pair(next))}<br>${esc(next.company_name)} · ${esc(next.destination)}` : 'ไม่มีรถรอคิว'}</div>
             <div class="actions"><button class="btn primary" data-act="call" data-dock="${d.id}" ${next ? '' : 'disabled'}>เรียกคิวถัดไป</button></div>
-            <div class="info">กดเมื่อจุดนี้พร้อมรับรถ · เรียกคันที่รอนานสุดตามลำดับคิว</div>
+            <div class="info">กดเมื่อจุดนี้พร้อมรับรถ</div>
           </div></article>`;
       }
       const called = q.status === 'called';

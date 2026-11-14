@@ -15,9 +15,17 @@ if not exist "backend\.env" (
 
 set "TUNNEL_NAME="
 set "PUBLIC_URL="
+set "AUTO_UPDATE="
 for /f "usebackq eol=# tokens=1,* delims==" %%A in ("backend\.env") do (
   if /i "%%A"=="TUNNEL_NAME" set "TUNNEL_NAME=%%B"
   if /i "%%A"=="PUBLIC_URL" set "PUBLIC_URL=%%B"
+  if /i "%%A"=="AUTO_UPDATE" set "AUTO_UPDATE=%%B"
+)
+
+rem Server only (AUTO_UPDATE=1): get the latest deployed code first, then keep watching for new deploys
+if "%AUTO_UPDATE%"=="1" (
+  echo Checking for a new deploy...
+  call "%~dp0auto-update.bat" once
 )
 
 echo Installing/updating packages (needed after every sync that changes package.json)...
@@ -39,6 +47,13 @@ if defined TUNNEL_NAME (
   timeout /t 5 /nobreak >nul
   echo Starting Cloudflare tunnel "%TUNNEL_NAME%"...
   start "TruckQueue Tunnel" cmd /k "cloudflared tunnel run %TUNNEL_NAME%"
+)
+
+if "%AUTO_UPDATE%"=="1" (
+  tasklist /v /fi "imagename eq cmd.exe" | find /i "TruckQueue Updater" >nul || (
+    echo Starting auto-update watcher...
+    start "TruckQueue Updater" /min cmd /c ""%~dp0auto-update.bat""
+  )
 )
 
 echo.

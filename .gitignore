@@ -10,9 +10,8 @@ npm-debug.log*
 Thumbs.db
 Desktop.ini
 .DS_Store
-logs/
-db_backup/
+
 
 # เฉพาะเครื่อง server (ตั้งรันตอนบูต + สำรองฐานข้อมูล) · เครื่อง dev ไม่ต้องใช้ ไม่ขึ้น git
-autostart/
-backup/
+_server/
+_db_backup/

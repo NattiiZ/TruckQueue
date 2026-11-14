@@ -3,7 +3,7 @@
 // - แตะ "รับทราบ" → แจ้ง server ให้หยุดส่งซ้ำ + หยุดเสียงในหน้าเว็บ (ถ้าเปิดอยู่)
 // - แตะที่ตัวแจ้งเตือน → เปิด/สลับกลับมาที่หน้าคนขับ
 const TAG = 'truckq-called';
-const VIBRATE = [700, 300, 700, 300, 700, 1000];
+const VIBRATE = [160, 40, 160, 40, 160, 40, 700, 400, 160, 40, 160, 40, 160, 40, 700];   // ตรงกับจังหวะในหน้าเว็บ เล่น 2 รอบ
 
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
@@ -16,8 +16,8 @@ self.addEventListener('push', (e) => {
   if (d.type !== 'called') return;
   e.waitUntil((async () => {
     (await openPages()).forEach((p) => p.postMessage({ type: 'called' }));   // หน้าเว็บที่เปิดอยู่ เช็กสถานะทันที
-    await self.registration.showNotification(`ถึงคิว ${d.queue_no} แล้ว!`, {
-      body: `กรุณานำรถเข้า ${d.dock_name || 'จุดรับสินค้า'} · แตะ "รับทราบ" เมื่อกำลังไป`,
+    await self.registration.showNotification(`ถึงคิว ${d.queue_no} แล้ว`, {
+      body: `กรุณานำรถเข้า ${d.dock_name || 'จุดรับสินค้า'} · กด "รับทราบ" เมื่อกำลังนำรถเข้า`,
       tag: TAG, renotify: true, requireInteraction: true, vibrate: VIBRATE,
       actions: [{ action: 'ack', title: 'รับทราบ' }],
       data: { queue_id: d.queue_id, token: d.token },

@@ -41,6 +41,7 @@
       alarm.start(q);
       $('#alarmDock').textContent = q.dock_name || 'จุดรับสินค้า';
       $('#alarmQno').textContent = q.queue_no;
+      $('#alarmMeta').textContent = [plate.pair(q), q.called_at ? `เรียกเมื่อ ${hhmm(q.called_at)} น.` : ''].filter(Boolean).join(' · ');
       $('#alarm').hidden = false;
     } else {
       alarm.stop();
@@ -224,7 +225,7 @@
         ? `<div class="confirm"><span>ยืนยันยกเลิกคิว ${esc(q.queue_no)}?</span><div class="row"><button class="btn" data-act="keep">ไม่ยกเลิก</button><button class="btn danger" data-act="cancel-yes">ยกเลิกคิว</button></div></div>`
         : `<button class="btn ghost" data-act="cancel">ยกเลิกคิว</button>`;
     } else if (q.status === 'called') {
-      box = `<div class="box called">ถึงคิวของคุณแล้ว<b>กรุณานำรถเข้า ${esc(q.dock_name)}</b><small>เรียกเมื่อ ${hhmm(q.called_at)}</small></div>`;
+      box = `<div class="box called">ถึงคิวของท่านแล้ว<b>กรุณานำรถเข้า ${esc(q.dock_name)}</b><small>เรียกเมื่อ ${hhmm(q.called_at)}</small></div>`;
     } else if (q.status === 'loading') {
       box = `<div class="box loading">กำลังเข้าโหลดสินค้า<b>${esc(q.dock_name)}</b><small>เริ่มเวลา ${hhmm(q.loading_started_at)}</small></div>`;
     } else if (q.status === 'done') {

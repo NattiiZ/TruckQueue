@@ -87,11 +87,28 @@
   <!-- หน้าจอเตือนเต็มจอเมื่อถึงคิว: ปิดได้ทางเดียวคือกด "รับทราบ" -->
   <div class="alarm" id="alarm" role="alertdialog" aria-modal="true" aria-labelledby="alarmTitle" hidden>
     <div class="alarm-in">
-      <div class="alarm-bell" aria-hidden="true">🔔</div>
-      <h2 id="alarmTitle">ถึงคิวของคุณแล้ว!</h2>
-      <div class="alarm-qno" id="alarmQno"></div>
-      <p>กรุณานำรถเข้า<b id="alarmDock"></b></p>
-      <button class="btn alarm-ack" type="button" id="alarmAck">รับทราบ · กำลังไป</button>
+      <div class="alarm-head">
+        <span class="alarm-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        </span>
+        <div>
+          <small>แจ้งเตือนเรียกคิว</small>
+          <h2 id="alarmTitle">ถึงคิวของท่านแล้ว</h2>
+        </div>
+      </div>
+      <div class="alarm-body">
+        <div class="alarm-row">
+          <span>หมายเลขคิว</span>
+          <div class="alarm-qno" id="alarmQno"></div>
+        </div>
+        <div class="alarm-row dock">
+          <span>กรุณานำรถเข้าที่</span>
+          <b id="alarmDock"></b>
+        </div>
+        <div class="alarm-meta" id="alarmMeta"></div>
+      </div>
+      <button class="btn alarm-ack" type="button" id="alarmAck">รับทราบ และกำลังนำรถเข้า</button>
+      <p class="alarm-note">เสียงและการสั่นเตือนจะหยุดเมื่อกด "รับทราบ"</p>
     </div>
   </div>
 

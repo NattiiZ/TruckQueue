@@ -8,7 +8,9 @@
   const RATE = 44100;
   const NOTI_TAG = 'truckq-called';
   const NOTI_REPEAT_MS = 15000;                       // ยังไม่กดรับทราบ → เด้งแจ้งเตือนซ้ำทุก 15 วินาที
-  const VIBRATE = [700, 300, 700, 300, 700, 1000];
+  // สั่นตามจังหวะเสียง: สั้น 3 ครั้งตามโน้ต + ยาว 1 ครั้ง แล้วพัก · รวม 2.4 วินาที เท่ากับรอบเสียง
+  const VIBRATE = [160, 40, 160, 40, 160, 40, 700, 1100];
+  const VIBRATE_MS = 2400;
 
   /* ---------- สร้างไฟล์เสียง WAV ในเครื่อง (ไม่ต้องโหลดไฟล์เสียงจากเน็ต) ---------- */
   function makeWav(seconds, sample) {
@@ -23,16 +25,22 @@
     return URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }));
   }
 
-  // ไซเรนสูง-ต่ำ (คล้ายรถพยาบาล) คลื่นเกือบสี่เหลี่ยม เสียงแหลม ฟังชัดแม้มีเสียงเครื่องยนต์
-  const TONES = [1050, 780];
-  const TONE_S = 0.4, GAP_S = 0.06, FADE_S = 0.006;
-  const SIREN = makeWav((TONE_S + GAP_S) * 4, (t) => {
-    const slot = TONE_S + GAP_S, k = Math.floor(t / slot), tt = t - k * slot;
-    if (tt > TONE_S) return 0;
-    const f = TONES[k % 2], fade = Math.min(1, tt / FADE_S, (TONE_S - tt) / FADE_S);
+  // เสียงระฆังประกาศ (chime) ไล่โน้ตขึ้น 4 ตัว A5 · C#6 · E6 · A6 วนทุก 2.4 วินาที
+  // เสียงใส สุภาพกว่าไซเรน แต่ความถี่สูงพอให้ได้ยินชัดแม้มีเสียงเครื่องยนต์
+  const CYCLE_S = 2.4;
+  const NOTES = [[0, 880], [0.2, 1108.7], [0.4, 1318.5], [0.6, 1760]];   // [เริ่มที่วินาที, ความถี่ Hz]
+  const PARTIALS = [[1, 1, 0.55], [2, 0.42, 0.3], [3, 0.2, 0.18], [4.2, 0.08, 0.1]];   // [ฮาร์มอนิก, ความดัง, เวลาจางหาย]
+  const SIREN = makeWav(CYCLE_S, (t) => {
     let s = 0;
-    for (const h of [1, 3, 5, 7]) s += Math.sin(2 * Math.PI * f * h * t) / h;
-    return s * 0.95 * fade;
+    for (const [at, f] of NOTES) {
+      const tt = t - at;
+      if (tt < 0) continue;
+      let n = 0;
+      for (const [h, a, tau] of PARTIALS) n += a * Math.exp(-tt / tau) * Math.sin(2 * Math.PI * f * h * tt);
+      s += n * Math.min(1, tt / 0.004);               // เริ่มเสียงนุ่มๆ 4 มิลลิวินาที กันเสียงแตก
+    }
+    const tail = Math.min(1, (CYCLE_S - t) / 0.25);   // จางลงท้ายรอบ กันเสียงคลิกตอนวนซ้ำ
+    return Math.tanh(s * 1.3) * 0.98 * tail;          // อัดให้ดังเต็มที่โดยไม่แตก
   });
   // เสียงเงียบ เล่นวนไว้ระหว่างรอคิว เพื่อให้เบราว์เซอร์ยอมเปิดไซเรนได้ทันทีตอนถึงคิว
   const SILENT = makeWav(1, () => 0);
@@ -107,9 +115,9 @@
     ringing = true;
     player.src = SIREN; player.volume = 1;
     player.play().catch(() => { });           // ยังไม่ได้แตะหน้าจอ = เล่นไม่ได้ ใช้หน้าจอเตือน + แจ้งเตือนแทน
-    vibrate(); vibrateTimer = setInterval(vibrate, 3700);
+    vibrate(); vibrateTimer = setInterval(vibrate, VIBRATE_MS);
     let on = false;
-    titleTimer = setInterval(() => { on = !on; document.title = on ? '🔔 ถึงคิวแล้ว! นำรถเข้าเลย' : baseTitle; }, 800);
+    titleTimer = setInterval(() => { on = !on; document.title = on ? '● ถึงคิวแล้ว · กรุณานำรถเข้า' : baseTitle; }, 800);
     if ('mediaSession' in navigator) {
       try { navigator.mediaSession.metadata = new MediaMetadata({ title: `ถึงคิว ${q.queue_no} แล้ว`, artist: `นำรถเข้า ${q.dock_name || ''}` }); } catch (e) { }
     }
@@ -126,13 +134,17 @@
     closeNotifications();
   }
 
+  // หมายเหตุ: iPhone (Safari) ไม่รองรับการสั่นจากเว็บ · Android ต้องเคยแตะหน้าจอแล้วและหน้าเว็บต้องแสดงอยู่
   function vibrate() { try { navigator.vibrate && navigator.vibrate(VIBRATE); } catch (e) { } }
+  // ถ้าเริ่มสั่นไม่ได้ (เบราว์เซอร์ยังไม่ให้สิทธิ์) แตะหน้าจอครั้งเดียวก็สั่นต่อได้ทันที · สลับกลับมาที่หน้านี้ก็สั่นใหม่
+  document.addEventListener('pointerdown', () => { if (ringing) vibrate(); }, true);
+  document.addEventListener('visibilitychange', () => { if (ringing && !document.hidden) vibrate(); });
 
   /* ---------- แจ้งเตือนของระบบ ---------- */
   function canNotify() { return 'Notification' in window && Notification.permission === 'granted'; }
   function notify(q) {
     if (!canNotify()) return;
-    const title = `ถึงคิว ${q.queue_no} แล้ว!`;
+    const title = `ถึงคิว ${q.queue_no} แล้ว`;
     const opts = {
       body: `กรุณานำรถเข้า ${q.dock_name || 'จุดรับสินค้า'} · แตะเพื่อเปิดดู`,
       tag: NOTI_TAG, renotify: true, requireInteraction: true, vibrate: VIBRATE,

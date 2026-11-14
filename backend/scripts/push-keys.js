@@ -1,26 +1,25 @@
 // สร้างกุญแจ VAPID สำหรับ Web Push (ส่งแจ้งเตือนถึงมือถือคนขับแม้ปิดเบราว์เซอร์)
-// ใช้: npm run push:keys  → เพิ่ม VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY ลงใน .env ให้เอง (ถ้ายังไม่มี)
+// ใช้: npm run push:keys  → ใส่ VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY ลงใน backend/.env ให้เอง (ถ้ายังไม่มี)
 // สร้างครั้งเดียวพอ: ถ้าเปลี่ยนกุญแจ มือถือที่สมัครรับแจ้งเตือนไว้แล้วจะรับไม่ได้จนกว่าจะเปิดหน้าคนขับใหม่
+// ถ้าเครื่อง dev กับ server ใช้ฐานข้อมูลเดียวกัน ให้สร้างที่ server แล้วคัดลอกกุญแจไปใส่ .env ของ dev
 import fs from 'node:fs';
-import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { generateVAPIDKeys } from 'web-push';
 
-const envFile = path.join(path.dirname(fileURLToPath(import.meta.url)), '../.env');
-const current = fs.existsSync(envFile) ? fs.readFileSync(envFile, 'utf8') : '';
+const envFile = fileURLToPath(new URL('../.env', import.meta.url));
+let text = fs.existsSync(envFile) ? fs.readFileSync(envFile, 'utf8') : '';
 
-if (/^VAPID_PUBLIC_KEY=.+/m.test(current)) {
+if (/^VAPID_PUBLIC_KEY=.+/m.test(text)) {
   console.log('✔ มีกุญแจ VAPID ใน .env อยู่แล้ว ไม่ได้สร้างใหม่');
-} else {
-  const { publicKey, privateKey } = generateVAPIDKeys();
-  const block = [
-    '',
-    '# Web Push: กุญแจสำหรับส่งแจ้งเตือน "ถึงคิวแล้ว" (สร้างด้วย npm run push:keys · ห้ามเผยแพร่ PRIVATE)',
-    `VAPID_PUBLIC_KEY=${publicKey}`,
-    `VAPID_PRIVATE_KEY=${privateKey}`,
-    'VAPID_SUBJECT=mailto:admin@truckq.local',
-    '',
-  ].join('\n');
-  fs.appendFileSync(envFile, (current.endsWith('\n') || !current ? '' : '\n') + block);
-  console.log('✔ เพิ่มกุญแจ VAPID ลงใน .env แล้ว · รีสตาร์ตเซิร์ฟเวอร์เพื่อใช้งาน');
+  process.exit(0);
 }
+
+const keys = generateVAPIDKeys();
+const set = (name, value) => {
+  const line = new RegExp(`^${name}=.*$`, 'm');
+  text = line.test(text) ? text.replace(line, `${name}=${value}`) : `${text.replace(/\n*$/, '\n')}${name}=${value}\n`;
+};
+set('VAPID_PUBLIC_KEY', keys.publicKey);
+set('VAPID_PRIVATE_KEY', keys.privateKey);
+fs.writeFileSync(envFile, text);
+console.log('✔ ใส่กุญแจ VAPID ลงใน backend/.env แล้ว · รีสตาร์ตเซิร์ฟเวอร์เพื่อใช้งาน');

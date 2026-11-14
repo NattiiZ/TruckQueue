@@ -1,0 +1,12 @@
+# ค่าตั้งค่าของแต่ละเครื่อง (รหัสผ่าน DB, กุญแจ VAPID) · ไม่ขึ้น git
+.env
+
+# แพ็กเกจ · สร้างใหม่ด้วย npm install (start-all.bat ทำให้เอง)
+node_modules/
+
+# ไฟล์ที่ระบบสร้างเอง
+*.log
+npm-debug.log*
+Thumbs.db
+Desktop.ini
+.DS_Store

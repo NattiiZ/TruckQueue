@@ -11,6 +11,9 @@ app.listen(env.port, '0.0.0.0', async () =>
   for (const nets of Object.values(os.networkInterfaces()))
     for (const n of nets || []) if (n.family === 'IPv4' && !n.internal) console.log(` Truck Driver App: http://${n.address}:${env.port}/driver/`);
 
+  if (env.publicUrl) console.log(` Public (https): ${env.publicUrl}/driver/`);
+  console.log(` - Database: ${env.db.user}@${env.db.host}:${env.db.port}/${env.db.database}`);
+
   try 
   {
     const [[r]] = await pool.query('SELECT DATABASE() AS db');

@@ -15,12 +15,12 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 
--- Dumping database structure for truckcue_db
-DROP DATABASE IF EXISTS `truckcue_db`;
-CREATE DATABASE IF NOT EXISTS `truckcue_db` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci */;
-USE `truckcue_db`;
+-- Dumping database structure for truckqueue_db
+DROP DATABASE IF EXISTS `truckqueue_db`;
+CREATE DATABASE IF NOT EXISTS `truckqueue_db` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci */;
+USE `truckqueue_db`;
 
--- Dumping structure for table truckcue_db.company
+-- Dumping structure for table truckqueue_db.company
 DROP TABLE IF EXISTS `company`;
 CREATE TABLE IF NOT EXISTS `company` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
@@ -30,14 +30,14 @@ CREATE TABLE IF NOT EXISTS `company` (
   UNIQUE KEY `uq_company_name` (`company_name`)
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dumping data for table truckcue_db.company: ~3 rows (approximately)
+-- Dumping data for table truckqueue_db.company: ~3 rows (approximately)
 DELETE FROM `company`;
 INSERT INTO `company` (`id`, `company_name`, `is_active`) VALUES
 	(1, 'TT', 1),
 	(2, 'PET', 1),
 	(3, 'NK', 1);
 
--- Dumping structure for table truckcue_db.destination
+-- Dumping structure for table truckqueue_db.destination
 DROP TABLE IF EXISTS `destination`;
 CREATE TABLE IF NOT EXISTS `destination` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
@@ -47,7 +47,7 @@ CREATE TABLE IF NOT EXISTS `destination` (
   UNIQUE KEY `uq_destination` (`destination`)
 ) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dumping data for table truckcue_db.destination: ~4 rows (approximately)
+-- Dumping data for table truckqueue_db.destination: ~4 rows (approximately)
 DELETE FROM `destination`;
 INSERT INTO `destination` (`id`, `destination`, `is_active`) VALUES
 	(1, 'ไม่ระบุ', 1),
@@ -55,7 +55,7 @@ INSERT INTO `destination` (`id`, `destination`, `is_active`) VALUES
 	(3, 'TW', 1),
 	(4, 'SBK', 1);
 
--- Dumping structure for table truckcue_db.dock
+-- Dumping structure for table truckqueue_db.dock
 DROP TABLE IF EXISTS `dock`;
 CREATE TABLE IF NOT EXISTS `dock` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -66,14 +66,14 @@ CREATE TABLE IF NOT EXISTS `dock` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dumping data for table truckcue_db.dock: ~3 rows (approximately)
+-- Dumping data for table truckqueue_db.dock: ~3 rows (approximately)
 DELETE FROM `dock`;
 INSERT INTO `dock` (`id`, `dock_name`, `std_minutes`, `is_active`, `sort_order`) VALUES
 	(1, 'จุดรับสินค้า 1', 35, 1, 1),
 	(2, 'จุดรับสินค้า 2', 50, 1, 2),
 	(3, 'จุดรับสินค้า 3', 25, 1, 3);
 
--- Dumping structure for table truckcue_db.driver
+-- Dumping structure for table truckqueue_db.driver
 DROP TABLE IF EXISTS `driver`;
 CREATE TABLE IF NOT EXISTS `driver` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
@@ -90,12 +90,12 @@ CREATE TABLE IF NOT EXISTS `driver` (
   CONSTRAINT `company_fk` FOREIGN KEY (`company`) REFERENCES `company` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dumping data for table truckcue_db.driver: ~1 rows (approximately)
+-- Dumping data for table truckqueue_db.driver: ~1 rows (approximately)
 DELETE FROM `driver`;
 INSERT INTO `driver` (`id`, `first_name`, `last_name`, `company`, `phone`, `status`, `created_at`, `last_visit_at`) VALUES
 	(1, 'ณัฐวุฒิ', 'ประสงค์', 3, '0637809503', 'active', '2026-11-12 06:55:09', '2026-11-12 16:10:45');
 
--- Dumping structure for table truckcue_db.queue
+-- Dumping structure for table truckqueue_db.queue
 DROP TABLE IF EXISTS `queue`;
 CREATE TABLE IF NOT EXISTS `queue` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
@@ -135,7 +135,7 @@ CREATE TABLE IF NOT EXISTS `queue` (
   CONSTRAINT `fk_queue_driver` FOREIGN KEY (`driver_id`) REFERENCES `driver` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dumping data for table truckcue_db.queue: ~5 rows (approximately)
+-- Dumping data for table truckqueue_db.queue: ~5 rows (approximately)
 DELETE FROM `queue`;
 INSERT INTO `queue` (`id`, `queue_date`, `queue_no`, `access_token`, `driver_id`, `first_name`, `last_name`, `phone`, `company_id`, `plate_no`, `trailer_plate`, `destination_id`, `dock_id`, `status`, `sort_order`, `skip_count`, `registered_at`, `called_at`, `loading_started_at`, `loading_finished_at`, `exited_at`, `note`, `updated_at`) VALUES
 	(1, '2026-11-12', '0001', '83057b821586896046569141dec76a51', 1, 'ณัฐวุฒิ', 'ประสงค์', '0637809503', 3, '71-0000', '70-1111', 1, 1, 'exited', '2026-11-12 13:55:09.710', 0, '2026-11-12 13:55:09.710', '2026-11-12 13:55:40.499', '2026-11-12 13:58:23.498', '2026-11-12 13:58:28.834', '2026-11-12 13:59:02.319', NULL, '2026-11-12 13:59:02'),
@@ -144,7 +144,7 @@ INSERT INTO `queue` (`id`, `queue_date`, `queue_no`, `access_token`, `driver_id`
 	(4, '2026-11-12', '0004', 'e4f2e1f2cc11bd7ce34e2282e24ad6f1', 1, 'ณัฐวุฒิ', 'ประสงค์', '0637809503', 3, '70-1234', '70-4321', 1, NULL, 'cancelled', '2026-11-12 16:10:13.935', 0, '2026-11-12 16:10:13.935', NULL, NULL, NULL, NULL, NULL, '2026-11-12 16:10:21'),
 	(5, '2026-11-12', '0005', 'fbfc01195d9829a7c7540bc9caaa308f', 1, 'ณัฐวุฒิ', 'ประสงค์', '0637809503', 3, '40-1234', '70-1234', 2, 1, 'exited', '2026-11-12 16:10:45.663', 0, '2026-11-12 16:10:45.663', '2026-11-12 16:11:01.564', '2026-11-12 16:11:51.941', '2026-11-12 16:29:08.822', '2026-11-12 16:29:10.653', NULL, '2026-11-12 16:29:10');
 
--- Dumping structure for table truckcue_db.queue_event
+-- Dumping structure for table truckqueue_db.queue_event
 DROP TABLE IF EXISTS `queue_event`;
 CREATE TABLE IF NOT EXISTS `queue_event` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
@@ -159,7 +159,7 @@ CREATE TABLE IF NOT EXISTS `queue_event` (
   CONSTRAINT `fk_event_queue` FOREIGN KEY (`queue_id`) REFERENCES `queue` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dumping data for table truckcue_db.queue_event: ~22 rows (approximately)
+-- Dumping data for table truckqueue_db.queue_event: ~22 rows (approximately)
 DELETE FROM `queue_event`;
 INSERT INTO `queue_event` (`id`, `queue_id`, `action`, `dock_id`, `user_id`, `meta`, `created_at`) VALUES
 	(1, 1, 'register', NULL, NULL, '{"source":"driver"}', '2026-11-12 13:55:09.711'),

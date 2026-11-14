@@ -1,4 +1,4 @@
-import 'dotenv/config';
+import "dotenv/config"; // สำรอง: อ่าน .env (ค่าจาก --env-file ใน npm scripts มาก่อนเสมอ)
 
 
 export const env = 
@@ -9,7 +9,7 @@ export const env =
     port: Number(process.env.DB_PORT || 3306),
     user: process.env.DB_USER || 'root',
     password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_NAME || 'truckcue_db',
+    database: process.env.DB_NAME || 'truckqueue_db',
   },
   // Web Push (สร้างด้วย npm run push:keys) · ไม่มีกุญแจ = ปิดการส่งแจ้งเตือนแบบ push ไว้ ระบบอื่นใช้ได้ปกติ
   vapid: {

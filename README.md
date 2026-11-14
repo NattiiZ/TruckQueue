@@ -57,7 +57,10 @@ TruckQ/
 
 ## วิธีรัน
 
-1. ตั้งค่า MariaDB: คัดลอก `backend/.env.example` เป็น `backend/.env` แล้วแก้ `DB_USER` / `DB_PASSWORD` (ฐานข้อมูลชื่อ `truckcue_db`)
+1. ตั้งค่าฐานข้อมูล (แยกตามเครื่อง · ไฟล์ `.env*` ไม่ขึ้น git ยกเว้น `.env.example`)
+   - **เครื่อง Server (XAMPP):** `backend/.env.production` → ฐานข้อมูล `truckqueue_db` · ใช้กับ `npm start`, `npm run db:*`
+   - **เครื่อง Dev:** `backend/.env.development` → ฐานข้อมูล `truckqueue_dev` · ใช้กับ `npm run dev`, `npm run db:*:dev`
+   - ค่าที่ใช้ร่วมกัน (เช่น VAPID) ใส่ใน `backend/.env` · เครื่องใหม่ให้คัดลอกจาก `.env.example` แล้วแก้ `DB_USER` / `DB_PASSWORD`
 2. ติดตั้ง
    ```bash
    cd backend
@@ -98,7 +101,7 @@ npm run push:keys
 - เสียงตอนปิดเบราว์เซอร์เป็นเสียงแจ้งเตือนปกติของโทรศัพท์ ถ้าเปิดหน้าเว็บค้างไว้จะได้ไซเรนดังวนจนกว่าจะกดรับทราบ
 - การส่งซ้ำอยู่ในหน่วยความจำของเซิร์ฟเวอร์ ถ้ารีสตาร์ตเซิร์ฟเวอร์ระหว่างนั้น การส่งซ้ำของคิวที่กำลังเรียกอยู่จะหยุด
 
-## ฐานข้อมูล (`truckcue_db`)
+## ฐานข้อมูล (`truckqueue_db`)
 
 | ตาราง | เก็บอะไร |
 |---|---|

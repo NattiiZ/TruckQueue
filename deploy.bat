@@ -1,9 +1,8 @@
 @echo off
-rem TruckQueue deploy: run on the DEV machine when your changes are finished.
-rem   - pushes main to GitHub (backup of your work)
-rem   - moves the "release" branch to the same commit
-rem The server (auto-update.bat) watches "release" and switches to it within ~1 minute.
-rem Pushing main alone (git push / GitHub Desktop) does NOT change the server.
+rem TruckQueue deploy (optional helper, DEV machine): shows what will go live, asks, then pushes main.
+rem The server (auto-update.bat) uses the latest push to GitHub "main" within ~1 minute,
+rem so a normal "git push" / GitHub Desktop "Push origin" does exactly the same thing.
+rem Commits that are not pushed never reach the server.
 setlocal
 title TruckQueue Deploy
 cd /d "%~dp0"
@@ -19,42 +18,32 @@ if /i not "%BR%"=="main" (
 set "DIRTY="
 for /f "delims=" %%L in ('git status --porcelain') do set "DIRTY=1"
 if defined DIRTY (
-  echo [!] There are uncommitted changes. Commit them first:
+  echo [!] Note: there are uncommitted changes. They will NOT be deployed:
   git status --short
-  goto fail
+  echo.
 )
 
 echo Checking GitHub...
 git fetch -q origin || (echo [!] Cannot reach GitHub. & goto fail)
-git rev-parse -q --verify origin/main >nul && (
-  git merge-base --is-ancestor origin/main HEAD || (
-    echo [!] GitHub main has commits this machine does not have. Run "git pull" first.
-    goto fail
-  )
+git merge-base --is-ancestor origin/main HEAD || (
+  echo [!] GitHub main has commits this machine does not have. Run "git pull" first.
+  goto fail
+)
+git diff --quiet origin/main HEAD && (
+  echo Nothing new to deploy - the server already has your latest pushed commit.
+  goto done
 )
 
 echo.
-git rev-parse -q --verify origin/release >nul
-if errorlevel 1 (
-  echo First deploy: the server will get everything up to:
-  git log --oneline -1
-) else (
-  git merge-base --is-ancestor origin/release HEAD || (
-    echo [!] release on GitHub is not behind main ^(someone changed it^). Check before deploying.
-    goto fail
-  )
-  echo Changes that will go to the server:
-  git log --oneline origin/release..HEAD
-  git diff --quiet origin/release HEAD && (echo   ^(none - server is already up to date^) & goto done)
-)
-
+echo Commits that will go to the server:
+git log --oneline origin/main..HEAD
 echo.
-choice /c YN /m "Deploy to the server now"
+choice /c YN /m "Push and deploy now"
 if errorlevel 2 goto done
 
-git push origin main main:release || (echo [!] Push failed. & goto fail)
+git push origin main || (echo [!] Push failed. & goto fail)
 echo.
-echo Deployed. The server will update within about 1 minute.
+echo Pushed. The server will update within about 1 minute.
 goto done
 
 :fail

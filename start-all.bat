@@ -22,10 +22,13 @@ for /f "usebackq eol=# tokens=1,* delims==" %%A in ("backend\.env") do (
   if /i "%%A"=="AUTO_UPDATE" set "AUTO_UPDATE=%%B"
 )
 
-rem Server only (AUTO_UPDATE=1): get the latest deployed code first, then keep watching for new deploys
+rem Server only (AUTO_UPDATE=1): get the latest pushed code first, then keep watching for new pushes.
+rem The updater runs from a copy in _server\ so a git update never rewrites the script while it is running.
 if "%AUTO_UPDATE%"=="1" (
-  echo Checking for a new deploy...
-  call "%~dp0auto-update.bat" once
+  if not exist "_server" mkdir "_server"
+  copy /y "auto-update.bat" "_server\auto-update-run.bat" >nul
+  echo Checking for new code on GitHub...
+  call "_server\auto-update-run.bat" once
 )
 
 echo Installing/updating packages (needed after every sync that changes package.json)...
@@ -52,7 +55,7 @@ if defined TUNNEL_NAME (
 if "%AUTO_UPDATE%"=="1" (
   tasklist /v /fi "imagename eq cmd.exe" | find /i "TruckQueue Updater" >nul || (
     echo Starting auto-update watcher...
-    start "TruckQueue Updater" /min cmd /c ""%~dp0auto-update.bat""
+    start "TruckQueue Updater" /min cmd /c ""%~dp0_server\auto-update-run.bat""
   )
 )
 

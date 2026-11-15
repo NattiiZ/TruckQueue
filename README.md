@@ -5,8 +5,8 @@
 ```
 TruckQueue/
 ├── start-all.bat                 เปิดระบบ (ใช้ไฟล์เดียวกันทั้งเครื่อง dev และ server)
-├── deploy.bat                    เครื่อง dev: ส่งโค้ดที่แก้เสร็จขึ้น server (เลื่อน branch release)
-├── auto-update.bat               เครื่อง server: เช็ก branch release ทุก 60 วินาที แล้วอัปเดตโค้ดให้เอง
+├── deploy.bat                    เครื่อง dev (ไม่บังคับ): ดูรายการ commit ที่จะขึ้น server แล้วค่อย push
+├── auto-update.bat               เครื่อง server: เช็ก GitHub main ทุก 60 วินาที แล้วอัปเดตเป็น push ล่าสุดให้เอง
 ├── frontend/                     หน้าจอ (HTML/CSS/JS ล้วน ไม่ต้อง build) · เปิดผ่าน backend ที่เดียว
 │   ├── shared/
 │   │   ├── common.js             โค้ดที่ทุกหน้าใช้ร่วมกัน: รูปแบบทะเบียนรถ, แสดงทะเบียน "หัว | หาง"
@@ -79,21 +79,21 @@ TruckQueue/
 | `PUBLIC_URL` | เว้นว่าง | `https://truckq.natt-server.online` |
 | `TUNNEL_NAME` | เว้นว่าง (ไม่เปิด tunnel) | `TruckQueue` |
 | `VAPID_*` | **ชุดเดียวกับ server** ถ้าใช้ DB เดียวกัน | สร้างครั้งเดียวด้วย `npm run push:keys` |
-| `AUTO_UPDATE` | เว้นว่าง | `1` (อัปเดตโค้ดเองเมื่อมีการ deploy) |
+| `AUTO_UPDATE` | เว้นว่าง | `1` (อัปเดตโค้ดเองทุกครั้งที่เครื่อง dev push) |
 
-GitHub มี 2 branch: **`main`** = งานล่าสุดของเครื่อง dev (push ได้ตลอด ไม่กระทบ server) · **`release`** = โค้ดที่ server ใช้งานจริง
+**commit** = บันทึกในโน้ตบุ๊กเท่านั้น (กี่ครั้งก็ได้ server ไม่รู้) · **push** = ส่งขึ้น GitHub `main` → server ใช้ push ล่าสุดภายใน 1 นาที
 
 ขั้นตอนทุกครั้ง:
-1. เครื่อง dev: แก้โค้ด → ทดสอบที่ `localhost` → commit → push ได้ตามสะดวก (สำรองงาน ยังไม่ขึ้น server)
-2. แก้เสร็จพร้อมใช้งาน: ดับเบิลคลิก **`deploy.bat`** → แสดงรายการที่จะขึ้น → กด `Y` → push `main` และเลื่อน `release` มาที่ commit เดียวกัน
-3. เครื่อง server: `auto-update.bat` (start-all.bat เปิดให้เองเมื่อ `AUTO_UPDATE=1`) เช็ก `release` ทุก 60 วินาที เจอของใหม่ก็สลับโค้ดให้ · backend รีสตาร์ตเอง (`npm start` ใช้ `--watch`) · ถ้า `package.json` เปลี่ยนจะ `npm install` ให้ก่อน · ประวัติอยู่ที่ `_server/update.log`
+1. เครื่อง dev: แก้โค้ด → ทดสอบที่ `localhost` → **commit** ได้เรื่อยๆ (ยังไม่ขึ้น server)
+2. พร้อมใช้งานจริง: **push** (GitHub Desktop "Push origin" / `git push` / หรือดับเบิลคลิก `deploy.bat` ที่แสดงรายการก่อนแล้วถามยืนยัน)
+3. เครื่อง server: `auto-update.bat` (start-all.bat เปิดให้เองเมื่อ `AUTO_UPDATE=1`) เช็ก `main` ทุก 60 วินาที เจอ push ใหม่ก็สลับโค้ดให้ · backend รีสตาร์ตเอง (`npm start` ใช้ `--watch`) · ถ้า `package.json` เปลี่ยนจะ `npm install` ให้ก่อน · ประวัติอยู่ที่ `_server/update.log`
    - ถ้ามีคนแก้ไฟล์บนเครื่อง server ตรงๆ จะ**ไม่อัปเดต**ทับ (บันทึก `[skip]` ใน log) · เปิด `git status` ที่ server แล้วย้อนการแก้ (`git checkout -- .`) หรือย้ายไปแก้ที่เครื่อง dev แทน
-   - ถ้า `start-all.bat` เองเปลี่ยน ให้ปิดหน้าต่าง backend/tunnel/updater แล้วเปิด `start-all.bat` ใหม่
-4. แก้โครงสร้างฐานข้อมูล: ทำที่ฐานข้อมูลของ server (ทั้งสองเครื่องใช้ DB เดียวกัน) · ถ้าโค้ดใหม่ต้องใช้ตาราง/คอลัมน์ใหม่ ให้แก้ DB ก่อนรัน `deploy.bat`
+   - ถ้า `start-all.bat` หรือ `auto-update.bat` เปลี่ยน (log มี `[note]`) ให้ปิดหน้าต่าง backend/tunnel/updater แล้วเปิด `start-all.bat` ใหม่
+4. แก้โครงสร้างฐานข้อมูล: ทำที่ฐานข้อมูลของ server (ทั้งสองเครื่องใช้ DB เดียวกัน) · ถ้าโค้ดใหม่ต้องใช้ตาราง/คอลัมน์ใหม่ ให้แก้ DB ก่อน push
 
-ตั้งค่าเครื่อง server ครั้งแรก (ครั้งเดียว): pull โค้ดล่าสุด → ใส่ `AUTO_UPDATE=1` ใน `backend/.env` → ปิดหน้าต่าง TruckQueue ที่เปิดอยู่ → เปิด `start-all.bat` ใหม่ (จะสลับไป branch `release` และเปิดหน้าต่าง "TruckQueue Updater" ย่อไว้)
+ตั้งค่าเครื่อง server ครั้งแรก (ครั้งเดียว): pull โค้ดล่าสุด → ใส่ `AUTO_UPDATE=1` ใน `backend/.env` → ปิดหน้าต่าง TruckQueue ที่เปิดอยู่ → เปิด `start-all.bat` ใหม่ (จะสลับไป branch `main` และเปิดหน้าต่าง "TruckQueue Updater" ย่อไว้)
 
-ย้อนกลับเวอร์ชันก่อนหน้าแบบด่วน (ที่เครื่อง dev): `git push --force origin <commit เดิม>:release` · server จะสลับกลับภายใน 1 นาที
+ย้อนกลับ commit ที่ขึ้นไปแล้วมีปัญหา (ที่เครื่อง dev): `git revert <commit>` → push · server จะกลับเป็นโค้ดเดิมภายใน 1 นาที
 
 ### ล้างข้อมูล (เริ่มใช้ระบบใหม่ / หลังทดสอบ) · ลบแล้วกู้คืนไม่ได้
 ```bash

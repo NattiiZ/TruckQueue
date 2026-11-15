@@ -4,49 +4,23 @@
 
 ```
 TruckQueue/
-├── start-all.bat                 เปิดระบบ (ใช้ไฟล์เดียวกันทั้งเครื่อง dev และ server)
-├── auto-update.bat               เครื่อง server: เช็ก GitHub main ทุก 60 วินาที แล้วอัปเดตโค้ดให้เอง
-├── frontend/                     หน้าจอ (HTML/CSS/JS ล้วน ไม่ต้อง build) · เปิดผ่าน backend ที่เดียว
-│   ├── shared/
-│   │   ├── common.js             โค้ดที่ทุกหน้าใช้ร่วมกัน: รูปแบบทะเบียนรถ, แสดงทะเบียน "หัว | หาง"
-│   │   └── api.js                รวมการเรียก API ทุกเส้น (axios) ไว้ที่ไฟล์เดียว
-│   ├── driver-app/               หน้าคนขับ (/driver): ลงทะเบียน รับคิว ดูสถานะ
-│   │   ├── index.html · style.css · manifest.webmanifest · icon.svg
-│   │   ├── app.js                ฟอร์ม บัตรคิว เช็กสถานะทุก 5 วินาที
-│   │   ├── alarm.js              เตือนเมื่อถึงคิว: ไซเรนดังวน หน้าจอเตือน แจ้งเตือน กันจอดับ
-│   │   └── sw.js                 service worker: รับ Web Push แม้ปิดเบราว์เซอร์
-│   └── staff-app/                หน้าพนักงาน (/staff) · ใช้ได้ทั้งคอมและมือถือ
-│       ├── index.html · style.css
-│       ├── app.js                เรียกคิว + จองคิวที่เคาน์เตอร์ + Dashboard
-│       └── analytics.html/.js/.css   หน้าวิเคราะห์แบบละเอียด (/staff/analytics.html)
-│
-└── backend/                      API (Node.js + Express) ต่อ MariaDB
-    ├── .env                      ค่าของเครื่องนี้: DB, tunnel, กุญแจ push (ไม่ขึ้น git)
-    ├── .env.example              ตัวอย่าง .env (ขึ้น git)
-    ├── scripts/
-    │   ├── reset-data.js         ล้างคิว (และคนขับ) เริ่มเลขคิวใหม่ที่ 0001
-    │   └── push-keys.js          สร้างกุญแจ Web Push ลง .env
+├── start-all.bat          เปิดระบบ (ไฟล์เดียวกันทั้งเครื่อง dev และ server)
+├── auto-update.bat        server: ดึงโค้ดใหม่เองเมื่อเครื่อง dev push
+├── frontend/              หน้าเว็บ HTML/CSS/JS ล้วน (ไม่ต้อง build) · backend เสิร์ฟให้
+│   ├── shared/            ใช้ร่วมกัน: common.js (ทะเบียนรถ, เวลา) · api.js (เรียก API ทุกเส้น)
+│   ├── driver/            หน้าคนขับ /driver: ลงทะเบียน บัตรคิว · alarm.js เตือนถึงคิว · sw.js รับ Web Push
+│   └── staff/             หน้าพนักงาน /staff: เรียกคิว จองคิว Dashboard · analytics.* หน้าวิเคราะห์
+└── backend/               API Node.js + Express + MariaDB
+    ├── .env.example       แบบไฟล์ตั้งค่า (คัดลอกเป็น .env ซึ่งไม่ขึ้น git)
+    ├── scripts/           reset-data.js (ล้างคิว) · push-keys.js (สร้างกุญแจ Web Push)
     └── src/
-        ├── server.js             จุดเริ่มต้น (npm start)
-        ├── app.js                ประกอบ Express: middleware → frontend → API → error
-        ├── config/               env.js (อ่าน .env) · database.js (connection pool, ทรานแซกชัน)
-        ├── middlewares/          requestLogger · errorHandler · requireStaff (ด่าน login พนักงาน)
-        ├── utils/                AppError · helpers (ตัดช่องว่าง, token) · plate (รูปแบบทะเบียนรถ)
-        ├── routes/index.js       รวม API ทั้งหมด ดูไฟล์นี้ไฟล์เดียวรู้ว่ามี API อะไร
-        └── modules/              แยกตามระบบงาน
-            ├── company/          บริษัทขนส่ง
-            ├── destination/      ปลายทาง
-            ├── driver/           คนขับ (เติมข้อมูลจากเบอร์, เปิด/ปิดสิทธิ์)
-            ├── dock/             จุดรับสินค้า (กระดานสถานะ, เรียกคิวถัดไป)
-            ├── report/           สรุปตัวเลข Dashboard วันนี้
-            ├── analytics/        วิเคราะห์ย้อนหลัง: ช่วงเวลาที่รถเยอะ · ส่งไปไหน · เวลาหายไปไหน
-            ├── push/             Web Push: ส่งแจ้งเตือนถึงคิว + ส่งซ้ำจนกว่าคนขับจะรับทราบ
-            └── queue/            คิว (งานหลัก)
-                ├── queue.routes.js      เส้นทาง API
-                ├── queue.controller.js  ตรวจข้อมูลที่ส่งมา
-                ├── queue.service.js     ทำงานกับฐานข้อมูล
-                ├── queue.status.js      สถานะคิวและลำดับขั้น
-                └── queue.estimate.js    ประมาณเวลาที่จะถูกเรียก
+        ├── server.js      จุดเริ่มต้น (npm start)
+        ├── app.js         ประกอบ Express: frontend → API → error
+        ├── routes/        index.js รวม API ทั้งหมดไว้ที่เดียว
+        ├── config/        อ่าน .env · ต่อฐานข้อมูล
+        ├── middlewares/   log · error · เสิร์ฟ frontend (กัน cache ไฟล์เก่า)
+        ├── utils/         AppError · helpers · plate (รูปแบบทะเบียน)
+        └── modules/       แยกตามงาน: queue (หลัก) · dock · driver · company · destination · report · analytics · push
 ```
 
 ## กติกาของระบบ
@@ -100,7 +74,7 @@ npm run push:keys
 - คนขับต้องกด "อนุญาต" แจ้งเตือน (ถามตอนกดยืนยันรับคิว หรือกดปุ่ม "เปิดเสียงและแจ้งเตือน" บนบัตรคิว)
 - **iPhone (iOS 16.4+)** ต้องกด แชร์ → "เพิ่มไปยังหน้าจอโฮม" แล้วเปิดจากไอคอน TruckQ ก่อน จึงจะรับแจ้งเตือนได้
 - พนักงานกดเรียกคิว → ส่งแจ้งเตือนทันที และส่งซ้ำทุก 30 วินาที (สูงสุด 10 ครั้ง) จนกว่าคนขับจะกด "รับทราบ" · หน้าพนักงานแสดงว่าคนขับรับทราบแล้วหรือยัง
-- เสียงตอนปิดเบราว์เซอร์เป็นเสียงแจ้งเตือนปกติของโทรศัพท์ ถ้าเปิดหน้าเว็บค้างไว้จะได้ไซเรนดังวนจนกว่าจะกดรับทราบ
+- เสียงตอนปิดเบราว์เซอร์เป็นเสียงแจ้งเตือนปกติของโทรศัพท์ ถ้าเปิดหน้าเว็บค้างไว้จะมีเสียงเตือนและสั่นวนจนกว่าจะกดรับทราบ
 - การส่งซ้ำอยู่ในหน่วยความจำของเซิร์ฟเวอร์ ถ้ารีสตาร์ตเซิร์ฟเวอร์ระหว่างนั้น การส่งซ้ำของคิวที่กำลังเรียกอยู่จะหยุด
 
 ## ฐานข้อมูล (`truckqueue_db`)
@@ -133,7 +107,7 @@ npm run push:keys
 | GET | `/api/push/public-key` | กุญแจสาธารณะสำหรับสมัคร Web Push (`null` = ยังไม่ได้ตั้งกุญแจ) |
 | POST | `/api/queues/:id/push` | สมัครรับแจ้งเตือนถึงคิว `{token, subscription}` |
 
-### ฝั่งพนักงาน (ยังไม่มี login · ด่านอยู่ที่ `middlewares/requireStaff.js`)
+### ฝั่งพนักงาน (ยังไม่มี login)
 | Method | Path | ใช้ทำอะไร |
 |---|---|---|
 | GET | `/api/staff/board` | สถานะทุกจุดรับสินค้า, คิวที่รอ (พร้อมเวลาคาดว่าจะเรียก), คิวที่โหลดเสร็จรอออก |

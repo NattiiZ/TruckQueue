@@ -1,17 +1,20 @@
-# ค่าตั้งค่าของแต่ละเครื่อง (รหัสผ่าน DB, กุญแจ VAPID) · ไม่ขึ้น git
+# ค่าของแต่ละเครื่อง (รหัสผ่าน DB, กุญแจ VAPID) · ใช้ backend/.env.example เป็นแบบ
 .env
+.env.*
+!.env.example
 
-# แพ็กเกจ · สร้างใหม่ด้วย npm install (start-all.bat ทำให้เอง)
+# สร้างใหม่ได้ด้วย npm install (start-all.bat ทำให้เอง)
 node_modules/
 
-# ไฟล์ที่ระบบสร้างเอง
+# เฉพาะเครื่อง server: ตัวอัปเดต, log, สำรองฐานข้อมูล
+_server/
+_db_backup/
+
+# ไฟล์ที่ระบบ / editor สร้างเอง
 *.log
-npm-debug.log*
+.vscode/
+.idea/
+.claude/
 Thumbs.db
 Desktop.ini
 .DS_Store
-
-
-# เฉพาะเครื่อง server (ตั้งรันตอนบูต + สำรองฐานข้อมูล) · เครื่อง dev ไม่ต้องใช้ ไม่ขึ้น git
-_server/
-_db_backup/

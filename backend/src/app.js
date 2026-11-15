@@ -19,8 +19,8 @@ app.use(express.json({ limit: '20kb' }));
 
 // ไฟล์หน้าเว็บ: ลิงก์ .js/.css ในหน้า .html มี ?v=เวลาแก้ไฟล์ ต่อท้ายให้อัตโนมัติ (ดู middlewares/frontendFiles.js)
 const frontend = createFrontend({
-  '/driver/': path.join(FRONTEND_DIR, 'driver-app'),
-  '/staff/': path.join(FRONTEND_DIR, 'staff-app'),
+  '/driver/': path.join(FRONTEND_DIR, 'driver'),
+  '/staff/': path.join(FRONTEND_DIR, 'staff'),
   '/shared/': path.join(FRONTEND_DIR, 'shared'),
   '/vendor/axios/': AXIOS_DIR,
 });

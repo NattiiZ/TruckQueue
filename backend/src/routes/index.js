@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import { pool } from '../config/database.js';
 import { asyncHandler } from '../utils/helpers.js';
-import { requireStaff } from '../middlewares/requireStaff.js';
 import { companyRoutes } from '../modules/company/company.routes.js';
 import { destinationRoutes } from '../modules/destination/destination.routes.js';
 import { driverRoutes, driverStaffRoutes } from '../modules/driver/driver.routes.js';
@@ -31,10 +30,8 @@ apiRoutes.use('/queues', queueRoutes);              // POST (Register)  |  GET (
 apiRoutes.get('/push/public-key', (req, res) => res.json({ publicKey: pushService.publicKey() }));  // GET (Web Push key)
 
 
-// ---- Staff ----
+// ---- Staff (ยังไม่มี login) ----
 const staff = Router();
-
-staff.use(requireStaff);
 staff.use('/', dockStaffRoutes);            // GET (/board)  |  POST (/docks/:id/call-next)
 staff.use('/', reportStaffRoutes);          // GET (/dashboard)
 staff.use('/', analyticsStaffRoutes);       // GET (/analytics?days=)

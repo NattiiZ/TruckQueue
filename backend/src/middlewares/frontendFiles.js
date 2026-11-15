@@ -10,7 +10,7 @@ const NO_CACHE = 'no-cache';
 const ASSET_RE = /(<(?:script|link)\b[^>]*?\b(?:src|href)=")([^"?#]+\.(?:js|css))(")/gi;
 
 /**
- * @param {Record<string, string>} mounts  URL prefix (ลงท้าย /) → โฟลเดอร์บนเครื่อง เช่น { '/driver/': '.../driver-app' }
+ * @param {Record<string, string>} mounts  URL prefix (ลงท้าย /) → โฟลเดอร์บนเครื่อง เช่น { '/driver/': '.../frontend/driver' }
  * @returns {(prefix: string) => import('express').RequestHandler}  ใช้แทน express.static ของแต่ละ prefix
  */
 export function createFrontend(mounts) {

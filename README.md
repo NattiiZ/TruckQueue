@@ -6,6 +6,7 @@
 TruckQueue/
 ├── start-all.bat          เปิดระบบ (ไฟล์เดียวกันทั้งเครื่อง dev และ server)
 ├── auto-update.bat        server: ดึงโค้ดใหม่เองเมื่อเครื่อง dev push
+├── check-status.bat       ดับเบิลคลิกเช็กว่าเว็บจริงทำงานปกติไหม (เครื่องไหนก็ได้)
 ├── frontend/              หน้าเว็บ HTML/CSS/JS ล้วน (ไม่ต้อง build) · backend เสิร์ฟให้
 │   ├── shared/            ใช้ร่วมกัน: common.js (ทะเบียนรถ, เวลา) · api.js (เรียก API ทุกเส้น)
 │   ├── driver/            หน้าคนขับ /driver: ลงทะเบียน บัตรคิว · alarm.js เตือนถึงคิว · sw.js รับ Web Push

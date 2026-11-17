@@ -162,57 +162,60 @@
         <dt>เกินมาตรฐาน</dt><dd class="${d.over_std ? 'bad' : ''}">${d.over_std} คัน</dd></dl></div>`;
     }).join('');
 
-    // กราฟรถมาถึงรายชั่วโมง (แยกสีตามจุดรับสินค้า, สีเทา = ยังรอคิว)
+    // กราฟรถมาถึงรายชั่วโมง 08:00–17:00 · แท่งสีเดียว มีตัวเลขบนแท่ง · ชั่วโมงปัจจุบันเน้นสี · ชี้ดูแยกตามจุดรับสินค้า
     const nowHour = new Date(t).getHours();
-    const hoursWithData = dash.hourly.map((h) => h.hour);
-    const from = Math.min(7, ...hoursWithData), to = Math.max(18, nowHour, ...hoursWithData);
-    const hours = []; for (let h = from; h <= to; h++) hours.push(h);
-    const series = [...dash.docks.map((d, i) => ({ id: d.id, name: d.dock_name, cls: `f${(i % 4) + 1}`, bg: `bg${(i % 4) + 1}` })), { id: null, name: 'ยังรอคิว', cls: 'f0', bg: 'bg0' }];
-    $('#hourLegend').innerHTML = series.map((s) => `<span><i class="sw ${s.bg}"></i>${esc(s.name)}</span>`).join('');
-    $('#hourChart').innerHTML = barChart(hours.map((h) => {
-      const vals = series.map((s) => dash.hourly.filter((x) => x.hour === h && x.dock_id === s.id).reduce((a, x) => a + x.n, 0));
-      const total = vals.reduce((a, b) => a + b, 0);
-      return { label: pad2(h), vals, classes: series.map((s) => s.cls),
-        tip: `<b>${pad2(h)}:00–${pad2(h + 1)}:00</b><br>มาถึง ${total} คัน${total ? '<br>' + series.map((s, j) => vals[j] ? `${esc(s.name)}: ${vals[j]}` : '').filter(Boolean).join(' · ') : ''}` };
+    const hours = []; for (let h = 8; h <= 16; h++) hours.push(h);
+    const names = new Map(dash.docks.map((d) => [d.id, d.dock_name]));
+    const outside = dash.hourly.filter((x) => x.hour < 8 || x.hour > 16).reduce((a, x) => a + x.n, 0);
+    $('#hourLegend').innerHTML = `<span><i class="sw bg1"></i>รถที่มาถึง</span><span><i class="sw bgnow"></i>ชั่วโมงปัจจุบัน</span>${outside ? `<span>นอกช่วงเวลา ${outside} คัน</span>` : ''}`;
+    $('#hourChart').innerHTML = hourChart(hours.map((h) => {
+      const rows = dash.hourly.filter((x) => x.hour === h);
+      const n = rows.reduce((a, x) => a + x.n, 0);
+      const parts = rows.filter((x) => x.n).map((x) => `${esc(x.dock_id == null ? 'ยังรอคิว' : names.get(x.dock_id) || '-')}: ${x.n}`);
+      return { label: `${pad2(h)}:00`, n, now: h === nowHour, future: h > nowHour,
+        tip: `<b>${pad2(h)}:00–${pad2(h + 1)}:00 น.</b><br>มาถึง ${n} คัน${parts.length ? '<br>' + parts.join(' · ') : ''}` };
     }));
-    $('#stdChart').innerHTML = stdChart(dash.docks.map((d, i) => ({ name: d.dock_name, std: d.std_minutes, avg: d.avg_load_min, n: d.loaded, cls: `f${(i % 4) + 1}` })));
+    $('#stdChart').innerHTML = stdChart(dash.docks.map((d) => ({ name: d.dock_name, std: d.std_minutes, avg: d.avg_load_min, n: d.loaded })));
   }
 
   /* ---------- กราฟ (SVG) ---------- */
   function scaleTicks(v) { for (const s of [1, 2, 5, 10, 15, 20, 25, 30, 50, 60, 100]) if (Math.ceil(v / s) <= 5) return { max: Math.max(s, Math.ceil(v / s) * s), step: s }; return { max: v, step: v / 4 }; }
   const roundTop = (x, y, w, h, r) => { r = Math.min(r, h, w / 2); return `M${x},${y + h}V${y + r}Q${x},${y} ${x + r},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + h}Z`; };
 
-  function barChart(cats) {
-    const W = 640, H = 220, L = 30, R = 8, T = 14, B = 26, pw = W - L - R, ph = H - T - B;
-    const { max, step } = scaleTicks(Math.max(1, ...cats.map((c) => c.vals.reduce((a, b) => a + b, 0))));
-    const y = (v) => T + ph - v / max * ph, bw = pw / cats.length, w = Math.min(30, bw * 0.62);
-    let s = `<svg viewBox="0 0 ${W} ${H}" class="chart" role="img">`;
+  // แท่งแนวตั้งสีเดียว ตัวเลขบนแท่ง · cats = [{ label, n, now, future, tip }]
+  function hourChart(cats) {
+    const W = 640, H = 240, L = 30, R = 8, T = 22, B = 28, pw = W - L - R, ph = H - T - B;
+    const { max, step } = scaleTicks(Math.max(1, ...cats.map((c) => c.n)));
+    const y = (v) => T + ph - v / max * ph, bw = pw / cats.length, w = Math.min(44, bw * 0.66);
+    let s = `<svg viewBox="0 0 ${W} ${H}" class="chart big" role="img">`;
     for (let v = 0; v <= max; v += step) s += `<line class="grid" x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}"/><text class="ax" x="${L - 6}" y="${y(v) + 4}" text-anchor="end">${v}</text>`;
     cats.forEach((c, i) => {
-      const cx = L + bw * i + bw / 2; let acc = 0; const top = c.vals.reduce((last, v, j) => v > 0 ? j : last, -1);
-      c.vals.forEach((v, j) => {
-        if (!v) return; const y1 = y(acc + v), y0 = y(acc); acc += v;
-        s += j === top ? `<path class="${c.classes[j]}" d="${roundTop(cx - w / 2, y1, w, y0 - y1, 3)}"/>`
-          : `<rect class="${c.classes[j]}" x="${cx - w / 2}" y="${y1 + 2}" width="${w}" height="${Math.max(0, y0 - y1 - 2)}"/>`;
-      });
-      s += `<text class="ax" x="${cx}" y="${H - 8}" text-anchor="middle">${c.label}</text><rect class="hit" x="${L + bw * i}" y="${T}" width="${bw}" height="${ph}" data-tip="${esc(c.tip)}"/>`;
+      const cx = L + bw * i + bw / 2;
+      if (c.n) {
+        s += `<path class="${c.now ? 'fnow' : 'f1'}" d="${roundTop(cx - w / 2, y(c.n), w, y(0) - y(c.n), 4)}"/>`;
+        s += `<text class="val" x="${cx}" y="${y(c.n) - 6}" text-anchor="middle">${c.n}</text>`;
+      } else if (!c.future) {
+        s += `<text class="ax" x="${cx}" y="${y(0) - 6}" text-anchor="middle">0</text>`;
+      }
+      s += `<text class="ax${c.now ? ' now' : ''}" x="${cx}" y="${H - 9}" text-anchor="middle">${c.label}</text><rect class="hit" x="${L + bw * i}" y="${T - 18}" width="${bw}" height="${ph + 18}" data-tip="${esc(c.tip)}"/>`;
     });
     return s + '</svg>';
   }
 
+  // แท่งแนวนอนเวลาโหลดเฉลี่ย · เกินมาตรฐาน = สีแดง · เส้นประ = มาตรฐาน
   function stdChart(rows) {
-    const W = 640, rowH = 50, T = 4, B = 26, L = 76, R = 64, H = T + rowH * rows.length + B, pw = W - L - R;
+    const W = 640, rowH = 54, T = 4, B = 26, L = 112, R = 120, H = T + rowH * rows.length + B, pw = W - L - R;
     const { max, step } = scaleTicks(Math.max(...rows.map((r) => Math.max(r.avg ?? 0, r.std))) * 1.1);
     const x = (v) => L + v / max * pw;
-    let s = `<svg viewBox="0 0 ${W} ${H}" class="chart" role="img">`;
+    let s = `<svg viewBox="0 0 ${W} ${H}" class="chart big" role="img">`;
     for (let v = 0; v <= max; v += step) s += `<line class="grid" x1="${x(v)}" x2="${x(v)}" y1="${T}" y2="${H - B}"/><text class="ax" x="${x(v)}" y="${H - 8}" text-anchor="middle">${v}</text>`;
     rows.forEach((r, i) => {
-      const cy = T + rowH * i + rowH / 2;
-      s += `<text class="lab" x="0" y="${cy + 4}">${esc(r.name)}</text>`;
+      const cy = T + rowH * i + rowH / 2, over = r.avg != null && r.avg > r.std;
+      s += `<text class="lab" x="0" y="${cy + 5}">${esc(r.name)}</text>`;
       s += r.avg != null
-        ? `<rect class="${r.cls}" x="${L}" y="${cy - 9}" width="${Math.max(3, x(r.avg) - L)}" height="18" rx="4"/><text class="lab" x="${Math.max(x(r.avg), x(r.std)) + 8}" y="${cy + 4}">${Math.round(r.avg)} นาที</text>`
-        : `<text class="ax" x="${L + 6}" y="${cy + 4}">ยังไม่มีรถโหลดเสร็จ</text>`;
-      s += `<line class="std" x1="${x(r.std)}" x2="${x(r.std)}" y1="${cy - 16}" y2="${cy + 16}"/>`;
+        ? `<rect class="${over ? 'fbad' : 'f1'}" x="${L}" y="${cy - 11}" width="${Math.max(3, x(r.avg) - L)}" height="22" rx="4"/><text class="lab${over ? ' bad' : ''}" x="${Math.max(x(r.avg), x(r.std)) + 8}" y="${cy + 5}">${Math.round(r.avg)} / ${r.std} นาที</text>`
+        : `<text class="ax" x="${L + 6}" y="${cy + 5}">ยังไม่มีรถโหลดเสร็จ</text>`;
+      s += `<line class="std" x1="${x(r.std)}" x2="${x(r.std)}" y1="${cy - 18}" y2="${cy + 18}"/>`;
       s += `<rect class="hit" x="0" y="${T + rowH * i}" width="${W}" height="${rowH}" data-tip="${esc(`<b>${r.name}</b><br>เฉลี่ย ${r.avg == null ? '–' : Math.round(r.avg) + ' นาที'} จาก ${r.n} คัน<br>มาตรฐาน ${r.std} นาที`)}"/>`;
     });
     return s + '</svg>';

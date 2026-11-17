@@ -1,5 +1,5 @@
 // ล้างข้อมูลการใช้งาน (เริ่มใช้ระบบใหม่ / หลังทดสอบ) — ลบแล้วกู้คืนไม่ได้
-//   npm run db:reset -- --yes              ลบคิวทั้งหมด + ประวัติการกด, เลขคิวเริ่มใหม่ที่ 0001
+//   npm run db:reset -- --yes              ลบคิวทั้งหมด + ประวัติการกด (เลขคิวเริ่ม 0001 ใหม่ทุกวันอยู่แล้ว)
 //   npm run db:reset -- --yes --drivers    ลบรายชื่อคนขับด้วย
 // ไม่แตะข้อมูลตั้งค่า: company, destination, dock
 import mysql from 'mysql2/promise';
@@ -22,10 +22,10 @@ try {
   await conn.query('DELETE FROM queue');
   if (withDrivers) await conn.query('DELETE FROM driver');
   await conn.commit();
-  await conn.query('ALTER TABLE queue AUTO_INCREMENT = 1');        // เลขคิวเริ่มใหม่ที่ 0001
+  await conn.query('ALTER TABLE queue AUTO_INCREMENT = 1');
   await conn.query('ALTER TABLE queue_event AUTO_INCREMENT = 1');
   if (withDrivers) await conn.query('ALTER TABLE driver AUTO_INCREMENT = 1');
-  console.log(`✔ ลบคิว ${before.queue} แถว, ประวัติ ${before.queue_event} แถว${withDrivers ? `, คนขับ ${before.driver} คน` : ` (เก็บรายชื่อคนขับ ${before.driver} คนไว้)`} · คิวถัดไปคือ 0001`);
+  console.log(`✔ ลบคิว ${before.queue} แถว, ประวัติ ${before.queue_event} แถว${withDrivers ? `, คนขับ ${before.driver} คน` : ` (เก็บรายชื่อคนขับ ${before.driver} คนไว้)`}`);
 } catch (e) {
   await conn.rollback().catch(() => {});
   throw e;

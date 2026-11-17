@@ -17,7 +17,20 @@ const logEvent = (conn, queueId, action, dockId = null, meta = null) =>
 /* ---------- ฝั่งคนขับ ---------- */
 
 /** ลงทะเบียนรับคิว → { id, token, queue_no } */
-export async function register({ phone, firstName, lastName, companyId, plate, trailer, destinationId, source = 'driver' }) {
+export async function register(input) {
+  // กดพร้อมกันหลายคน ฐานข้อมูลอาจตัดรายการหนึ่งทิ้ง (deadlock) หรือได้เลขคิวชนกัน → ลองใหม่อัตโนมัติ
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await registerOnce(input);
+    } catch (e) {
+      const retry = e.code === 'ER_LOCK_DEADLOCK' || (e.code === 'ER_DUP_ENTRY' && /uq_queue_day_no/.test(e.message));
+      if (!retry || attempt >= 4) throw e;
+      await new Promise((r) => setTimeout(r, 30 * attempt + Math.random() * 50));
+    }
+  }
+}
+
+async function registerOnce({ phone, firstName, lastName, companyId, plate, trailer, destinationId, source = 'driver' }) {
   return tx(async (c) => {
     await companyService.assertActive(c, companyId);
     await destinationService.assertActive(c, destinationId);
@@ -29,14 +42,18 @@ export async function register({ phone, firstName, lastName, companyId, plate, t
 
     const driverId = await driverService.upsertForQueue(c, { phone, firstName, lastName, companyId });
 
+    // เลขคิวเริ่ม 0001 ใหม่ทุกวัน · FOR UPDATE ล็อกคิวของวันนี้ไว้ ไม่ให้สองคนกดพร้อมกันได้เลขซ้ำ
+    // (มี UNIQUE (queue_date, queue_no) กันซ้ำอีกชั้น)
+    const [[{ last }]] = await c.query(
+      'SELECT COALESCE(MAX(CAST(queue_no AS UNSIGNED)), 0) AS last FROM queue WHERE queue_date = CURDATE() FOR UPDATE');
+    const queueNo = String(Number(last) + 1).padStart(4, '0');
+
     const token = newToken();
     const [ins] = await c.query(
-      `INSERT INTO queue (queue_date, access_token, driver_id, first_name, last_name, phone, company_id,
+      `INSERT INTO queue (queue_date, queue_no, access_token, driver_id, first_name, last_name, phone, company_id,
                           plate_no, trailer_plate, destination_id, status, sort_order, registered_at)
-       VALUES (CURDATE(), ?, ?, ?, ?, ?, ?, ?, ?, ?, 'waiting', NOW(3), NOW(3))`,
-      [token, driverId, firstName, lastName, phone, companyId, plate, trailer, destinationId]);
-    const queueNo = String(ins.insertId).padStart(4, '0');
-    await c.query('UPDATE queue SET queue_no = ? WHERE id = ?', [queueNo, ins.insertId]);
+       VALUES (CURDATE(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'waiting', NOW(3), NOW(3))`,
+      [queueNo, token, driverId, firstName, lastName, phone, companyId, plate, trailer, destinationId]);
     await logEvent(c, ins.insertId, 'register', null, { source });   // source: driver = คนขับจองเอง, staff = พนักงานจองให้
     return { id: ins.insertId, token, queue_no: queueNo };
   });

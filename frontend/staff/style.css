@@ -125,6 +125,14 @@ svg.chart{width:100%;height:auto;display:block;overflow:visible}
 .grid{stroke:var(--line);stroke-width:1}
 .f1{fill:var(--s1)} .f2{fill:var(--s2)} .f3{fill:var(--s3)} .f4{fill:var(--s4)} .f0{fill:var(--line-strong)}
 .std{stroke:var(--fg);stroke-width:1.5;stroke-dasharray:3 3}
+.chart.big .ax{font-size:13px}
+.chart.big .lab{font-size:14px}
+.ax.now{fill:#a86a00;font-weight:700}
+.val{fill:var(--fg);font-size:15px;font-weight:700;font-family:var(--f-mono)}
+.fnow{fill:#e9a000} .bgnow{background:#e9a000}
+.fbad{fill:var(--late)} .bgbad{background:var(--late)}
+.lab.bad{fill:var(--late)}
+.std-key{width:16px;border-top:2px dashed var(--fg);display:inline-block}
 .hit{fill:transparent}
 .hit:hover{fill:var(--hover)}
 

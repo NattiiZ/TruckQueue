@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#005bac">
   <meta name="color-scheme" content="light">
-  <title>วิเคราะห์ข้อมูล · TruckQ</title>
+  <title>รายงานวิเคราะห์ข้อมูล · TruckQ</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap">
@@ -16,12 +16,6 @@
   <header class="top">
     <div class="top-in">
       <div class="brand"><span class="mark" aria-hidden="true">TQ</span><div><b>TruckQ</b><small>พนักงาน · FG Warehouse</small></div></div>
-      <nav class="tabs" aria-label="เมนู">
-        <a href="./#queue">เรียกคิว</a>
-        <a href="./#book">จองคิว</a>
-        <a href="./#dashboard">Dashboard</a>
-        <a href="analytics.html" aria-current="page">วิเคราะห์</a>
-      </nav>
     </div>
   </header>
 
@@ -29,39 +23,53 @@
     <div class="banner" id="netBanner" hidden></div>
 
     <div class="bar">
-      <div><h1>วิเคราะห์ข้อมูล</h1><span class="muted" id="rangeTxt"></span></div>
-      <div class="chips" id="period" role="group" aria-label="ช่วงเวลา">
-        <button data-days="7">7 วัน</button><button data-days="30">30 วัน</button><button data-days="90">90 วัน</button>
+      <div><h1>รายงานวิเคราะห์ข้อมูลการรับสินค้า</h1><span class="muted" id="rangeTxt"></span></div>
+      <div class="period">
+        <div class="chips" id="period" role="group" aria-label="ช่วงเวลา">
+          <button data-days="1">วันนี้</button><button data-days="7">7 วัน</button><button data-days="30">30 วัน</button><button data-days="90">90 วัน</button>
+        </div>
+        <label class="pick-day">หรือเลือกวันที่ <input type="date" id="pickDay"></label>
       </div>
     </div>
 
     <div class="nums" id="summary"></div>
-    <div class="empty-state" id="emptyState" hidden>ยังไม่มีข้อมูลในช่วงนี้ · เมื่อมีรถเข้า-ออกครบรอบ กราฟจะขึ้นเอง</div>
+    <div class="empty-state" id="emptyState" hidden>ไม่พบข้อมูลในช่วงเวลาที่เลือก · ระบบจะแสดงผลเมื่อมีรถเข้า-ออกครบรอบ</div>
 
-    <!-- 1) ช่วงเวลาที่รถเยอะ -->
+    <!-- 1) ปริมาณรถตามช่วงเวลา -->
     <section class="card a-sec">
-      <h2>ช่วงเวลาที่รถเยอะ</h2>
-      <p class="sub">จำนวนรถที่มาถึงเฉลี่ยต่อวัน แยกตามวันและชั่วโมง · สีเข้ม = รถเยอะ</p>
-      <ul class="insights" id="peakInsights"></ul>
+      <h2>1. ปริมาณรถเข้ารับสินค้าจำแนกตามช่วงเวลา (08:00–17:00 น.)</h2>
       <div class="heat-wrap"><div class="heat" id="heatmap"></div></div>
       <div class="scale"><span>น้อย</span><i></i><span>มาก</span></div>
     </section>
 
-    <!-- 2) ส่งไปไหน -->
-    <section class="card a-sec">
-      <h2>ส่งไปไหน</h2>
-      <p class="sub">จำนวนคันต่อปลายทาง</p>
-      <ul class="insights" id="destInsights"></ul>
-      <div id="destBars"></div>
-    </section>
+    <div class="a-grid">
+      <div class="a-col">
+        <!-- 2) สัดส่วนตามปลายทาง -->
+        <section class="card a-sec">
+          <h2>2. สัดส่วนการจัดส่งจำแนกตามปลายทาง</h2>
+          <div id="destBars"></div>
+        </section>
 
-    <!-- 3) เวลาหายไปไหน -->
-    <section class="card a-sec">
-      <h2>เวลาหายไปไหน</h2>
-      <p class="sub">เวลาเฉลี่ยต่อคันในแต่ละช่วง (นาที) · นับเฉพาะคันที่ออกจากคลังแล้ว</p>
-      <ul class="insights" id="stageInsights"></ul>
-      <div class="legend" id="stageLegend"></div>
-      <div id="stageBars"></div>
+        <!-- 3) สัดส่วนตามบริษัทขนส่ง -->
+        <section class="card a-sec">
+          <h2>3. สัดส่วนรถจำแนกตามบริษัทขนส่ง</h2>
+          <div id="compBars"></div>
+        </section>
+      </div>
+
+      <!-- 4) ระยะเวลาแต่ละขั้นตอน -->
+      <section class="card a-sec">
+        <h2>4. ระยะเวลาเฉลี่ยในแต่ละขั้นตอนการดำเนินงาน</h2>
+        <div class="legend" id="stageLegend"></div>
+        <div id="stageBars"></div>
+      </section>
+    </div>
+
+    <!-- 5) รายวัน (เฉพาะช่วงหลายวัน) -->
+    <section class="card a-sec" id="dailySec" hidden>
+      <h2>5. จำนวนรถที่ออกจากคลังรายวัน</h2>
+      <div id="dailyChart"></div>
+      <div class="legend"><span><i class="sw bg1"></i>วันจันทร์–ศุกร์</span><span><i class="sw bg0"></i>วันเสาร์–อาทิตย์</span><span><i class="std-key"></i><span id="dailyAvg">ค่าเฉลี่ยต่อวัน</span></span></div>
     </section>
   </main>
 

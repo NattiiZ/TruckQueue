@@ -51,7 +51,7 @@
     /* ---------- ฝั่งพนักงาน ---------- */
     getBoard: () => get('/staff/board'),                                   // หน้าเรียกคิว
     getDashboard: () => get('/staff/dashboard'),                           // ภาพรวมวันนี้
-    getAnalytics: (days) => get('/staff/analytics', { days }),             // หน้าวิเคราะห์ย้อนหลัง
+    getAnalytics: (days, date) => get('/staff/analytics', { days, date }),             // หน้าวิเคราะห์ย้อนหลัง
     callNext: (dockId) => post(`/staff/docks/${dockId}/call-next`),        // เรียกคิวถัดไปเข้าจุดรับสินค้า
     // action: 'start' | 'finish' | 'exit' | 'skip' | 'cancel'
     updateQueueStatus: (id, action) => post(`/staff/queues/${id}/${action}`),

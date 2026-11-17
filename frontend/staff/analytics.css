@@ -6,17 +6,31 @@
   --st4:#1baf7a;   /* รอออก */
 }
 .a-sec{margin-top:14px}
-.a-sec h2{font-size:18px}
-.insights{margin:4px 0 14px;padding-left:20px;display:grid;gap:4px;font-size:15.5px}
-.insights b{color:var(--blue)}
+.a-sec h2{font-size:18px;margin-bottom:14px}
+.a-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,440px),1fr));gap:14px;align-items:start}
+.a-grid .a-sec{margin-top:14px}
+.a-grid{align-items:stretch}
+.a-grid > .a-sec{margin-bottom:0}
+.a-col{display:flex;flex-direction:column}
+.a-col .a-sec:last-child{flex:1}
+#dailySec .legend{margin:10px 0 0}
+.a-sec[hidden]{display:none}
+.a-sec .legend{margin:0 0 14px}
 .empty-state{margin-top:14px;background:var(--surface);border:2px dashed var(--line-strong);border-radius:12px;padding:20px;text-align:center;color:var(--muted)}
+
+/* เลือกช่วงเวลา */
+.period{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.pick-day{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:14px;font-weight:600}
+.pick-day input{font:inherit;color:var(--fg);border:2px solid var(--line);border-radius:8px;padding:3px 8px;background:var(--surface)}
+.pick-day input.on{border-color:var(--blue);color:var(--blue)}
+@media (max-width:640px){.period{align-items:flex-start}}
 
 /* heatmap วัน × ชั่วโมง */
 .heat-wrap{overflow-x:auto}
-.heat{display:grid;gap:3px;min-width:560px;font-size:12px}
+.heat{display:grid;gap:4px;min-width:520px;font-size:12px}
 .heat .h-lab{color:var(--muted);text-align:center;font-family:var(--f-mono)}
 .heat .d-lab{color:var(--muted);font-weight:700;display:flex;align-items:center;padding-right:6px}
-.heat .cell{height:30px;border-radius:5px;display:grid;place-items:center;font-family:var(--f-mono);font-size:11px;font-weight:600;background:var(--bg)}
+.heat .cell{height:36px;min-width:0;border-radius:5px;display:grid;place-items:center;font-family:var(--f-mono);font-size:11px;font-weight:600;background:var(--bg)}
 .heat .cell.peak{outline:3px solid #ffc20e;outline-offset:-1px}
 .scale{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);margin-top:8px}
 .scale i{display:block;width:140px;height:10px;border-radius:5px;background:linear-gradient(90deg,rgba(0,91,172,.08),rgba(0,91,172,1))}

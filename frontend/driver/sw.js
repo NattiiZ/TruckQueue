@@ -8,11 +8,37 @@ const VIBRATE = [160, 40, 160, 40, 160, 40, 700, 400, 160, 40, 160, 40, 160, 40,
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
 
+const INFO_TAG = 'truckq-info';
 const openPages = () => self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+
+// หยุดเสียงไซเรนในหน้าคนขับ: Chrome บน Android หยุดโค้ดของหน้าที่อยู่เบื้องหลัง แต่เสียงยังเล่นต่อ
+// หน้าที่ซ่อนอยู่จึงสั่งด้วยข้อความไม่ได้ ต้องโหลดหน้าใหม่ (เสียงหยุด และกลับเข้ามาจะเห็นสถานะล่าสุด)
+async function silencePages(msg) {
+  for (const p of await openPages()) {
+    if (!new URL(p.url).pathname.startsWith('/driver/')) continue;
+    if (p.visibilityState === 'hidden') await p.navigate(p.url).catch(() => p.postMessage(msg));
+    else p.postMessage(msg);
+  }
+}
+
+const ENDED = {
+  skip: (q) => [`คิว ${q} ถูกข้ามไปก่อน`, 'กลับไปรอคิว · เปิดหน้าคิวไว้เพื่อให้มีเสียงเตือนเมื่อถึงคิวอีกครั้ง'],
+  cancel: (q) => [`คิว ${q} ถูกยกเลิกแล้ว`, 'ไม่ต้องนำรถเข้า'],
+  start: (q) => [`คิว ${q} เริ่มโหลดสินค้าแล้ว`, 'แตะเพื่อดูสถานะ'],
+};
 
 self.addEventListener('push', (e) => {
   let d = {};
   try { d = e.data.json(); } catch (err) { /* ข้อมูลผิดรูปแบบ */ }
+  if (d.type === 'ended') {
+    return e.waitUntil((async () => {
+      (await self.registration.getNotifications({ tag: TAG })).forEach((n) => n.close());
+      await silencePages({ type: 'ended' });
+      // Chrome บังคับว่าทุก push ต้องแสดงแจ้งเตือน → แสดงสถานะใหม่แบบไม่มีเสียง
+      const [title, body] = (ENDED[d.step] || ENDED.cancel)(d.queue_no || '');
+      await self.registration.showNotification(title, { body, tag: INFO_TAG, silent: true });
+    })());
+  }
   if (d.type !== 'called') return;
   e.waitUntil((async () => {
     (await openPages()).forEach((p) => p.postMessage({ type: 'called' }));   // หน้าเว็บที่เปิดอยู่ เช็กสถานะทันที
@@ -31,12 +57,12 @@ self.addEventListener('notificationclick', (e) => {
   e.waitUntil((async () => {
     const pages = await openPages();
     if (e.action === 'ack') {
-      pages.forEach((p) => p.postMessage({ type: 'ack' }));
       if (data.queue_id && data.token) {
         await fetch(`/api/queues/${data.queue_id}/ack`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: data.token }),
         }).catch(() => { });
       }
+      await silencePages({ type: 'ack' });   // บันทึกรับทราบก่อน หน้าที่โหลดใหม่จะได้ไม่ดังซ้ำ
       return;
     }
     const page = pages.find((p) => new URL(p.url).pathname.startsWith('/driver/'));

@@ -57,6 +57,8 @@ export async function acknowledge(req, res) {
 
 /** POST /api/staff/queues/:id/:step  (start | finish | exit | skip | cancel) */
 export async function applyStep(req, res) {
-  await queueService.applyStep(Number(req.params.id) || 0, req.params.step);
+  const id = Number(req.params.id) || 0;
+  await queueService.applyStep(id, req.params.step);
+  pushService.notifyEnded(id, req.params.step);   // หยุดเสียง/ปิดแจ้งเตือนที่ค้างในมือถือคนขับ (ส่งเบื้องหลัง)
   res.json({ ok: true });
 }

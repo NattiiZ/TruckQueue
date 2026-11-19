@@ -66,6 +66,7 @@
     navigator.serviceWorker.addEventListener('message', (e) => {
       if (e.data?.type === 'ack') alarm.onAck?.();          // กด "รับทราบ" จากแจ้งเตือน
       if (e.data?.type === 'called') alarm.onPush?.();      // server แจ้งว่าถึงคิว → เช็กสถานะทันที
+      if (e.data?.type === 'ended') { stop(); alarm.onPush?.(); }   // ถูกข้าม/ยกเลิก/เริ่มโหลด → หยุดเสียง แล้วเช็กสถานะ
     });
   }
 

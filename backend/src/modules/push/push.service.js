@@ -49,6 +49,33 @@ export function notifyCalled(queueId) {
   run();
 }
 
+/**
+ * พนักงานกด ข้าม / ยกเลิก / เริ่มโหลด ระหว่างที่คนขับยังไม่กดรับทราบ
+ * → ส่ง push ให้ service worker ปิดแจ้งเตือนที่ค้าง และหยุดเสียงไซเรนในหน้าเว็บที่ค้างอยู่เบื้องหลัง
+ * (Chrome บน Android หยุดโค้ดของหน้าเว็บตอนออกจากเบราว์เซอร์ แต่เสียงยังเล่นต่อ หน้าเว็บจึงปิดเสียงเองไม่ได้)
+ */
+export function notifyEnded(queueId, step) {
+  if (!enabled || !['skip', 'cancel', 'start'].includes(step)) return;
+  sendEnded(queueId, step).catch((err) => console.error(`Web Push คิว ${queueId}:`, err.message));
+}
+
+async function sendEnded(queueId, step) {
+  const [[row]] = await pool.query(
+    `SELECT q.id, q.queue_no, q.driver_ack_at, s.endpoint, s.p256dh, s.auth
+       FROM push_subscription s JOIN queue q ON q.id = s.queue_id
+      WHERE s.queue_id = ?`, [queueId]);
+  if (!row || row.driver_ack_at) return;   // รับทราบแล้ว = ไม่มีเสียงค้าง ไม่ต้องส่ง
+  try {
+    await webpush.sendNotification(
+      { endpoint: row.endpoint, keys: { p256dh: row.p256dh, auth: row.auth } },
+      JSON.stringify({ type: 'ended', step, queue_id: row.id, queue_no: row.queue_no }),
+      { TTL: 120, urgency: 'high' });
+  } catch (err) {
+    if (err.statusCode === 404 || err.statusCode === 410) await pool.query('DELETE FROM push_subscription WHERE queue_id = ?', [queueId]);
+    else console.error(`Web Push คิว ${row.queue_no}: ส่งไม่สำเร็จ (${err.statusCode || err.message})`);
+  }
+}
+
 /** ส่ง 1 ครั้ง · คืนข้อมูลคิวถ้ายังต้องเตือนต่อ, คืน null ถ้าไม่ต้องส่งแล้ว */
 async function sendCalled(queueId, calledAt) {
   const [[row]] = await pool.query(
